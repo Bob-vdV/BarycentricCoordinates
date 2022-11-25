@@ -1,22 +1,21 @@
 import * as THREE from "three";
+import { mod, to_2d_vector } from "./utils";
+import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry';
 
 class Interpolation {
     material: THREE.Material;
     bivarite_function = Interpolation.wachspress;
+    points: THREE.Vector3[];
 
-    constructor(material: THREE.Material) {
+    constructor(material: THREE.Material, points: THREE.Vector3[]) {
         this.material = material;
-    }
-
-    // TODO: move this to somewhere else
-    static mod(a: number, b: number): number {
-        return ((a % b) + b) % b;
+        this.points = points;
     }
 
     static wachspress(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
-        let p = new THREE.Vector2(points[idx].x, points[idx].y);
-        let r = x.distanceTo(p);
-        let power = 1; // TODO: THis is not wachspress but mean value, but change it later
+        const p = to_2d_vector(points[idx]);
+        const r = x.distanceTo(p);
+        const power = 1; // TODO: This is not wachspress but mean value, but change it later
         return r ** power;
     }
 
@@ -25,6 +24,8 @@ class Interpolation {
      * where only the x and y axes are considered - z is discarded.
      * 
      * @param points Three points that make up the triangle.
+     * 
+     * TODO: maybe move this to utils?
      */
     static calculate_2d_triangle(points: THREE.Vector2[]): number {
         let area = Math.abs((
@@ -38,43 +39,44 @@ class Interpolation {
         return area;
     }
 
-    calculate_weight(x: THREE.Vector2, points: THREE.Vector3[], idx: number) {
-        let num_points = points.length;
+    calculate_weight(x: THREE.Vector2, idx: number) {
+        let num_points = this.points.length;
 
-        let prev_idx = Interpolation.mod(idx - 1, num_points);
-        let next_idx = Interpolation.mod(idx + 1, num_points);
+        let prev_idx = mod(idx - 1, num_points);
+        let next_idx = mod(idx + 1, num_points);
 
         //TODO: maybe refactor this into new function?
-        let p_prev = new THREE.Vector2(points[prev_idx].x, points[prev_idx].y);
-        let p = new THREE.Vector2(points[idx].x, points[idx].y);
-        let p_next = new THREE.Vector2(points[next_idx].x, points[next_idx].y);
+        const p_prev = to_2d_vector(this.points[prev_idx]);
+        const p = to_2d_vector(this.points[idx]);
+        const p_next = to_2d_vector(this.points[next_idx]);
 
         let A_prev = Interpolation.calculate_2d_triangle([x, p_prev, p]);
         let A = Interpolation.calculate_2d_triangle([x, p, p_next]);
         let B = Interpolation.calculate_2d_triangle([x, p_prev, p_next]);
 
         let weight = (
-            this.bivarite_function(x, points, next_idx) * A_prev -
-            this.bivarite_function(x, points, idx) * B +
-            this.bivarite_function(x, points, prev_idx) * A
+            this.bivarite_function(x, this.points, next_idx) * A_prev -
+            this.bivarite_function(x, this.points, idx) * B +
+            this.bivarite_function(x, this.points, prev_idx) * A
         ) / (A_prev * A);
 
         return weight;
     }
 
-    interpolate(x: THREE.Vector2, points: THREE.Vector3[]): THREE.Vector3 {
+    interpolate(x_coor: number, y_coor: number): THREE.Vector3 {
+        const vector_x = new THREE.Vector2(x_coor, y_coor);
         let weights = [];
         let sum_weights = 0;
-        for (let idx = 0; idx < points.length; idx++) {
-            weights.push(this.calculate_weight(x, points, idx));
+        for (let idx = 0; idx < this.points.length; idx++) {
+            weights.push(this.calculate_weight(vector_x, idx));
             sum_weights += weights[idx];
         }
 
         let interpolation = new THREE.Vector3();
 
-        for (let idx = 0; idx < points.length; idx++) {
-            let p = points[idx].clone();
-            let lambda = weights[idx] / sum_weights;
+        for (let idx = 0; idx < this.points.length; idx++) {
+            let p = this.points[idx].clone();
+            const lambda = weights[idx] / sum_weights;
             p.multiplyScalar(lambda);
             interpolation.add(p);
         }
@@ -82,10 +84,38 @@ class Interpolation {
         return interpolation;
     }
 
-    generateMesh(points: THREE.Vector3[]) {
-        //TODO
+    generateMesh(): THREE.Mesh {
 
+        let testFunction = ( u:number, v:number, target:THREE.Vector3 ) => {
+            
+            const temp = 6;   //  TODO:remove this 
+            
+            u = u * temp - (temp/2);
+            v = v * temp - (temp/2);
 
+            const vector = this.interpolate(u, v);
+            //console.log(u, v, vector);
+            target.copy(vector);
+            target.x = u;
+            target.y = v;
+
+            //target.set( u, v, Math.cos( u ) * Math.sin( v ) );
+        };
+            
+
+        const slices = 400;
+
+        const geometry = new ParametricGeometry(testFunction, slices, slices);
+        console.log(geometry);
+
+        /*
+        const wireframe = new WireframeGeometry(geometry);
+        const lines = new THREE.LineSegments(wireframe);
+        return lines;*/
+
+        const mesh = new THREE.Mesh(geometry, this.material);
+
+        return mesh;
     }
 
 

@@ -14,7 +14,7 @@ class Polygon {
 
     generateGeometry(): THREE.BufferGeometry {
         //Copy points, then add first point again for drawing last line
-        let pointsCopy = this.points;
+        let pointsCopy = Object.assign([], this.points);
         pointsCopy.push(pointsCopy[0]);
 
         const geometry = new THREE.BufferGeometry().setFromPoints(pointsCopy);

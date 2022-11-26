@@ -20,22 +20,21 @@ class Interpolation {
     }
 
     /**
-     * Calculate the area of the triangle between three points,
-     * where only the x and y axes are considered - z is discarded.
+     * Calculate the signed area of the triangle between three points in 2d space.
      * 
      * @param points Three points that make up the triangle.
      * 
      * TODO: maybe move this to utils?
      */
     static calculate_2d_triangle(points: THREE.Vector2[]): number {
-        let area = Math.abs((
+        let area = (
             points[0].x * points[1].y +
             points[1].x * points[2].y +
             points[2].x * points[0].y -
             points[0].y * points[1].x -
             points[1].y * points[2].x -
             points[2].y * points[0].x
-        ) / 2);
+        ) / 2;
         return area;
     }
 
@@ -103,10 +102,9 @@ class Interpolation {
         };
             
 
-        const slices = 400;
+        const slices = 1000;
 
         const geometry = new ParametricGeometry(testFunction, slices, slices);
-        console.log(geometry);
 
         /*
         const wireframe = new WireframeGeometry(geometry);
@@ -117,6 +115,7 @@ class Interpolation {
 
         return mesh;
     }
+
 
 
 

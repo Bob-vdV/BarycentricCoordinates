@@ -1,121 +1,116 @@
 import * as THREE from "three";
-import { mod, to_2d_vector } from "./utils";
+import { mod, to2dVector, signedTriangleArea } from "./utils";
 import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry';
 
 class Interpolation {
+    slices: number;
     material: THREE.Material;
-    bivarite_function = Interpolation.wachspress;
+    bivariteFunction = Interpolation.wachspress;
     points: THREE.Vector3[];
 
-    constructor(material: THREE.Material, points: THREE.Vector3[]) {
+    constructor(material: THREE.Material, points: THREE.Vector3[], slices = 400) {
         this.material = material;
         this.points = points;
+        this.slices = slices;
     }
 
     static wachspress(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
-        const p = to_2d_vector(points[idx]);
+        const p = to2dVector(points[idx]);
         const r = x.distanceTo(p);
         const power = 1; // TODO: This is not wachspress but mean value, but change it later
         return r ** power;
     }
 
-    /**
-     * Calculate the signed area of the triangle between three points in 2d space.
-     * 
-     * @param points Three points that make up the triangle.
-     * 
-     * TODO: maybe move this to utils?
-     */
-    static calculate_2d_triangle(points: THREE.Vector2[]): number {
-        let area = (
-            points[0].x * points[1].y +
-            points[1].x * points[2].y +
-            points[2].x * points[0].y -
-            points[0].y * points[1].x -
-            points[1].y * points[2].x -
-            points[2].y * points[0].x
-        ) / 2;
-        return area;
-    }
+    calculateWeight(x: THREE.Vector2, idx: number) {
+        const numPoints = this.points.length;
 
-    calculate_weight(x: THREE.Vector2, idx: number) {
-        let num_points = this.points.length;
+        const idxPrev = mod(idx - 1, numPoints);
+        const idxNext = mod(idx + 1, numPoints);
 
-        let prev_idx = mod(idx - 1, num_points);
-        let next_idx = mod(idx + 1, num_points);
+        const pPrev = to2dVector(this.points[idxPrev]);
+        const p = to2dVector(this.points[idx]);
+        const pNext = to2dVector(this.points[idxNext]);
 
-        //TODO: maybe refactor this into new function?
-        const p_prev = to_2d_vector(this.points[prev_idx]);
-        const p = to_2d_vector(this.points[idx]);
-        const p_next = to_2d_vector(this.points[next_idx]);
+        const APrev = signedTriangleArea([x, pPrev, p]);
+        const A = signedTriangleArea([x, p, pNext]);
+        const B = signedTriangleArea([x, pPrev, pNext]);
 
-        let A_prev = Interpolation.calculate_2d_triangle([x, p_prev, p]);
-        let A = Interpolation.calculate_2d_triangle([x, p, p_next]);
-        let B = Interpolation.calculate_2d_triangle([x, p_prev, p_next]);
-
-        let weight = (
-            this.bivarite_function(x, this.points, next_idx) * A_prev -
-            this.bivarite_function(x, this.points, idx) * B +
-            this.bivarite_function(x, this.points, prev_idx) * A
-        ) / (A_prev * A);
+        const weight = (
+            this.bivariteFunction(x, this.points, idxNext) * APrev -
+            this.bivariteFunction(x, this.points, idx) * B +
+            this.bivariteFunction(x, this.points, idxPrev) * A
+        ) / (APrev * A);
 
         return weight;
     }
 
-    interpolate(x_coor: number, y_coor: number): THREE.Vector3 {
-        const vector_x = new THREE.Vector2(x_coor, y_coor);
+    interpolate(xCoord: number, yCoord: number): number {
+        const vector = new THREE.Vector2(xCoord, yCoord);
         let weights = [];
-        let sum_weights = 0;
+        let sumWeights = 0;
         for (let idx = 0; idx < this.points.length; idx++) {
-            weights.push(this.calculate_weight(vector_x, idx));
-            sum_weights += weights[idx];
+            weights.push(this.calculateWeight(vector, idx));
+            sumWeights += weights[idx];
         }
 
-        let interpolation = new THREE.Vector3();
+        let zCoord = 0;
 
         for (let idx = 0; idx < this.points.length; idx++) {
-            let p = this.points[idx].clone();
-            const lambda = weights[idx] / sum_weights;
-            p.multiplyScalar(lambda);
-            interpolation.add(p);
+            let p = this.points[idx];
+            const lambda = weights[idx] / sumWeights;
+            zCoord += p.z * lambda;
         }
 
-        return interpolation;
+        return zCoord;
     }
 
     generateMesh(): THREE.Mesh {
+        let testFunction = (u: number, v: number, target: THREE.Vector3) => {
+            const temp = 7;   //  TODO:remove this 
 
-        let testFunction = ( u:number, v:number, target:THREE.Vector3 ) => {
-            
-            const temp = 6;   //  TODO:remove this 
-            
-            u = u * temp - (temp/2);
-            v = v * temp - (temp/2);
+            u = u * temp - (temp / 2);
+            v = v * temp - (temp / 2);
 
-            const vector = this.interpolate(u, v);
-            //console.log(u, v, vector);
-            target.copy(vector);
-            target.x = u;
-            target.y = v;
-
-            //target.set( u, v, Math.cos( u ) * Math.sin( v ) );
+            const z = this.interpolate(u, v);
+            target.set(u, v, z);
         };
-            
 
-        const slices = 1000;
+        const geometry = new ParametricGeometry(testFunction, this.slices, this.slices);
 
-        const geometry = new ParametricGeometry(testFunction, slices, slices);
 
-        /*
-        const wireframe = new WireframeGeometry(geometry);
-        const lines = new THREE.LineSegments(wireframe);
-        return lines;*/
+
+        this.applyColorMap(geometry);
+
+        console.log(geometry);
 
         const mesh = new THREE.Mesh(geometry, this.material);
+
+
+
+
 
         return mesh;
     }
 
+    applyColorMap(geometry: ParametricGeometry) {
+        const positions = geometry.getAttribute("position");
+        const count = positions.count
+
+        const zMin = 0;
+        const zMax = 1;
+
+        let colors = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+            let color = (Math.max(zMin, Math.min(zMax, positions.array[i * 3 + 2])) - zMin)  * (zMax - zMin);
+            colors[i*3] = color;
+            colors[i*3 + 1] = color;
+            colors[i*3 + 2] = color;
+        }
+        geometry.setAttribute(
+            "color",
+            new THREE.BufferAttribute(colors, 3)
+        );
+    }
 
 
 

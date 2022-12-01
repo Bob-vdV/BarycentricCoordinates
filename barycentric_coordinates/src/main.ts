@@ -1,13 +1,13 @@
 import './style.css';
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { MapControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Polygon } from './polygon';
 import { Interpolation } from './interpolation';
-
-const aspectRatio = 16 / 9;
+import { Vector3 } from 'three';
 
 const width = window.innerWidth;
-const height = width / aspectRatio;
+const height = window.innerHeight;
+
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.001, 1000);
@@ -15,14 +15,14 @@ const camera = new THREE.PerspectiveCamera(75, width / height, 0.001, 1000);
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("tool") as HTMLCanvasElement
 });
-renderer.setClearColor( 0x444444, 1 ); // Sets background color
+renderer.setClearColor(0x222222, 1); // Sets background color
 
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(width, height);
 
-camera.position.setZ(5);
+camera.position.setZ(10);
 
-let polygon = new Polygon(6, 3);
+let polygon = new Polygon(5, 3);
 polygon.points[0].z = 1;
 
 const geometry = polygon.generateGeometry();
@@ -30,15 +30,21 @@ const material = new THREE.LineBasicMaterial({ color: 0xFF6347 });
 const line = new THREE.Line(geometry, material);
 scene.add(line);
 
-const interpolation = new Interpolation(new THREE.MeshBasicMaterial({/*color:0x049ef4, */wireframe: false, side:THREE.DoubleSide, vertexColors: true}), polygon.points);
+const interpolation = new Interpolation(new THREE.MeshBasicMaterial({wireframe: false, side: THREE.DoubleSide, vertexColors: true }), polygon.points);
 
 scene.add(interpolation.generateMesh());
 
-const controls = new OrbitControls(camera, renderer.domElement);
+camera.up = new Vector3(0, 0, 1); // Change the 'up' parameter so that the controls work as intended
+const controls = new MapControls(camera, renderer.domElement);
+
+
+
+
+
+
 
 function animate() {
   requestAnimationFrame(animate);
-
   controls.update();
   renderer.render(scene, camera);
 }

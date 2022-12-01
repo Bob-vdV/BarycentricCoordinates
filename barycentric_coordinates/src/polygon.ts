@@ -3,11 +3,11 @@ import * as THREE from "three";
 class Polygon {
     points: THREE.Vector3[];
 
-    constructor(num_points: number, radius: number, z = 0) {
+    constructor(numPoints: number, radius: number, z = 0) {
         this.points = [];
-        for (let i = 0; i < num_points; i++) {
-            let x = radius * Math.cos(i * 2 * Math.PI / num_points);
-            let y = radius * Math.sin(i * 2 * Math.PI / num_points);
+        for (let i = 0; i < numPoints; i++) {
+            let x = radius * Math.cos(i * 2 * Math.PI / numPoints);
+            let y = radius * Math.sin(i * 2 * Math.PI / numPoints);
             this.points.push(new THREE.Vector3(x, y, z));
         }
     }

@@ -2,11 +2,14 @@ import * as THREE from "three";
 import { mod, to2dVector, signedTriangleArea } from "./utils";
 import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry';
 
+import { evaluate_cmap } from "./js-colormaps.js";
+
 class Interpolation {
     slices: number;
     material: THREE.Material;
     bivariteFunction = Interpolation.wachspress;
     points: THREE.Vector3[];
+    colormap = "viridis"
 
     constructor(material: THREE.Material, points: THREE.Vector3[], slices = 400) {
         this.material = material;
@@ -77,17 +80,11 @@ class Interpolation {
 
         const geometry = new ParametricGeometry(testFunction, this.slices, this.slices);
 
-
-
         this.applyColorMap(geometry);
 
         console.log(geometry);
 
         const mesh = new THREE.Mesh(geometry, this.material);
-
-
-
-
 
         return mesh;
     }
@@ -101,10 +98,13 @@ class Interpolation {
 
         let colors = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
-            let color = (Math.max(zMin, Math.min(zMax, positions.array[i * 3 + 2])) - zMin)  * (zMax - zMin);
-            colors[i*3] = color;
-            colors[i*3 + 1] = color;
-            colors[i*3 + 2] = color;
+            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * 3 + 2])) - zMin) * (zMax - zMin);
+
+            let color: number[] = evaluate_cmap(value, this.colormap, false);
+
+            colors[i * 3] = color[0];
+            colors[i * 3 + 1] = color[1];
+            colors[i * 3 + 2] = color[2];
         }
         geometry.setAttribute(
             "color",

@@ -5,12 +5,14 @@ import { Polygon } from './polygon';
 import { Interpolation } from './interpolation';
 import { Vector3 } from 'three';
 
-const width = window.innerWidth;
-const height = window.innerHeight;
+const windowWidth = window.innerWidth;
+const windowHeight = window.innerHeight;
+
 
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(75, width / height, 0.001, 1000);
+const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.001, 1000);
+const tanFOV = Math.tan( ( ( Math.PI / 180 ) * camera.fov / 2 ) );
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("tool") as HTMLCanvasElement
@@ -18,7 +20,7 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setClearColor(0x222222, 1); // Sets background color
 
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(width, height);
+renderer.setSize(windowWidth, windowHeight);
 
 camera.position.setZ(10);
 
@@ -36,6 +38,35 @@ scene.add(interpolation.generateMesh());
 
 camera.up = new Vector3(0, 0, 1); // Change the 'up' parameter so that the controls work as intended
 const controls = new MapControls(camera, renderer.domElement);
+
+
+
+
+/**
+ * Window resize listener
+ * 
+ * Source: http://jsfiddle.net/Q4Jpu/
+ * 
+ * TODO: move this to somewhere else, using MVC pattern
+ * 
+ * 
+ */
+
+window.addEventListener('resize', onWindowResize, false);
+
+
+function onWindowResize(event:any){
+  camera.aspect = window.innerWidth / window.innerHeight;
+    
+    // adjust the FOV
+    camera.fov = ( 360 / Math.PI ) * Math.atan( tanFOV * ( window.innerHeight / windowHeight ) );
+    
+    camera.updateProjectionMatrix();
+    camera.lookAt( scene.position );
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
 
 
 

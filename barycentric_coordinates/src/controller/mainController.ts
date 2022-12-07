@@ -1,7 +1,0 @@
-
-
-class MainController {
-    
-}
-
-export {MainController}

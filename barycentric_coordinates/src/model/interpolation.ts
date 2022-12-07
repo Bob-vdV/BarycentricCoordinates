@@ -1,27 +1,31 @@
 import * as THREE from "three";
-import { mod, to2dVector, signedTriangleArea } from "../utils";
-
-import { evaluate_cmap } from "../ts-colormaps.js";
+import { mod, to2dVector, signedTriangleArea } from "./utils";
+import { evaluate_cmap } from "./ts-colormaps.js";
 import { BarycentricGeometry } from "./BarycentricGeometry";
+import { Parser } from "expr-eval";
 
 class Interpolation {
-    slices: number;
-    material: THREE.Material;
-    bivariteFunction = Interpolation.wachspress;
+    readonly name = "interpolation";
+    params = {
+        c_function: Parser.parse("r^p").toJSFunction("r,p"),
+        p: 1,
+        slices: 100,
+        colormap: "viridis",
+        wireframe: false,
+    }
+    material: THREE.MeshBasicMaterial;
     points: THREE.Vector3[];
-    colormap = "viridis"
+    mesh = new THREE.Mesh(); //immediately replaced with other mesh but allows easier code elsewhere.
 
-    constructor(material: THREE.Material, points: THREE.Vector3[], slices = 400) {
+    constructor(material: THREE.MeshBasicMaterial, points: THREE.Vector3[]) {
         this.material = material;
         this.points = points;
-        this.slices = slices;
     }
 
-    static wachspress(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
-        const p = to2dVector(points[idx]);
-        const r = x.distanceTo(p);
-        const power = 1; // TODO: This is not wachspress but mean value, but change it later
-        return r ** power;
+    bivariteFunction(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
+        const point = to2dVector(points[idx]);
+        const r = x.distanceTo(point);
+        return this.params.c_function(r, this.params.p);
     }
 
     calculateWeight(x: THREE.Vector2, idx: number) {
@@ -67,7 +71,9 @@ class Interpolation {
         return zCoord;
     }
 
-    generateMesh(): THREE.Mesh {
+    generateMesh() {
+        this.material.wireframe = this.params.wireframe;
+
         let testFunction = (u: number, v: number, target: THREE.Vector3) => {
             const temp = 7;   //  TODO:remove this 
 
@@ -78,13 +84,12 @@ class Interpolation {
             target.set(u, v, z);
         };
 
-        const geometry = new BarycentricGeometry(testFunction, this.slices, this.slices);
+        const geometry = new BarycentricGeometry(testFunction, this.params.slices, this.params.slices);
 
         this.applyColorMap(geometry);
 
-        const mesh = new THREE.Mesh(geometry, this.material);
-
-        return mesh;
+        this.mesh = new THREE.Mesh(geometry, this.material);
+        this.mesh.name = this.name;
     }
 
     applyColorMap(geometry: BarycentricGeometry) {
@@ -100,7 +105,11 @@ class Interpolation {
         for (let i = 0; i < count; i++) {
             let value = (Math.max(zMin, Math.min(zMax, positions.array[i * 3 + 2])) - zMin) * (zMax - zMin);
 
-            let color: number[] = evaluate_cmap(value, this.colormap, false);
+            if (isNaN(value)) {
+                console.error("value at ", i, " is NaN");
+                continue;
+            }
+            let color: number[] = evaluate_cmap(value, this.params.colormap, false);
 
             colors[i * numColors] = color[0];
             colors[i * numColors + 1] = color[1];

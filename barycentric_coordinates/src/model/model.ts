@@ -15,25 +15,26 @@ class Model {
     view: MainView;
     controls: MapControls;  //TODO: Change this 
 
+    polygon: Polygon;
+    interpolation: Interpolation;
+
     constructor() {
-
         this.scene = new THREE.Scene();
-
 
         /**
          * Setup objects
          * 
          */
-        let polygon = new Polygon(5, 3);
-        polygon.points[0].z = 1;
+        this.polygon = new Polygon(5, 3);
+        this.polygon.points[0].z = 1;
 
-        const polygonMesh = polygon.generateMesh();
+        const polygonMesh = this.polygon.generateMesh();
         this.scene.add(polygonMesh);
 
-        const interpolation = new Interpolation(new THREE.MeshBasicMaterial({ wireframe: false, side: THREE.DoubleSide, vertexColors: true, transparent: true }), polygon.points);
+        this.interpolation = new Interpolation(new THREE.MeshBasicMaterial({ wireframe: false, side: THREE.DoubleSide, vertexColors: true, transparent: true }), this.polygon.points);
+        this.interpolation.generateMesh();
 
-        this.scene.add(interpolation.generateMesh());
-
+        this.scene.add(this.interpolation.mesh);
 
         /**
          * Setup view
@@ -50,12 +51,22 @@ class Model {
 
     }
 
-    animate() {
-        const animate = () => {
-            this.animate();
-        }
+    updateInterpolation() { //TODO: Change this somehow
+        this.interpolation.generateMesh() // Do calculations for new one before removal so that old one can be replaced immediately
 
-        requestAnimationFrame(animate);
+        let mesh = this.scene.getObjectByName(this.interpolation.name);
+        if (mesh != undefined) {
+            this.scene.remove(mesh);
+        } else {
+            throw new Error("Object 'interpolation' not defined!");
+        }
+        this.scene.add(this.interpolation.mesh);
+    }
+
+    animate() {
+        requestAnimationFrame(() => {
+            this.animate();
+        });
         this.controls.update();
         this.view.updateView();
     }

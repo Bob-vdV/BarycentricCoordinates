@@ -7,7 +7,7 @@
  * 
  * 
  * 
- * TODO: shrink this down to the useful colormaps, remove checks
+ * TODO: shrink this down to the useful colormaps
  * 
  */
 

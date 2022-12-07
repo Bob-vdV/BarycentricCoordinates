@@ -12,6 +12,8 @@ class MainView {
     tanFOV: number;
     renderer: THREE.WebGLRenderer;
 
+    gui: GuiWrapper;
+
     constructor(model: Model) {
         this.model = model;
 
@@ -33,10 +35,12 @@ class MainView {
 
         this.camera.up = new THREE.Vector3(0, 0, 1); // Change the 'up' parameter to Z so that the controls work as intended
 
-        window.addEventListener('resize', this.onWindowResize, false);
+        window.addEventListener('resize', () => {
+            this.onWindowResize();
+        }, false);
 
 
-        const gui = new GuiWrapper;
+        this.gui = new GuiWrapper(model);
     }
 
 

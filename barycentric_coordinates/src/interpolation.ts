@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { mod, to2dVector, signedTriangleArea } from "./utils";
-import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry';
 
-import { evaluate_cmap } from "./js-colormaps.js";
+import { evaluate_cmap } from "./ts-colormaps.js";
+import { BarycentricGeometry } from "./BarycentricGeometry";
 
 class Interpolation {
     slices: number;
@@ -78,41 +78,40 @@ class Interpolation {
             target.set(u, v, z);
         };
 
-        const geometry = new ParametricGeometry(testFunction, this.slices, this.slices);
+        const geometry = new BarycentricGeometry(testFunction, this.slices, this.slices);
 
         this.applyColorMap(geometry);
-
-        console.log(geometry);
 
         const mesh = new THREE.Mesh(geometry, this.material);
 
         return mesh;
     }
 
-    applyColorMap(geometry: ParametricGeometry) {
+    applyColorMap(geometry: BarycentricGeometry) {
         const positions = geometry.getAttribute("position");
         const count = positions.count
 
         const zMin = 0;
         const zMax = 1;
 
-        let colors = new Float32Array(count * 3);
+        const numColors = 4;
+
+        let colors = new Float32Array(count * numColors);
         for (let i = 0; i < count; i++) {
             let value = (Math.max(zMin, Math.min(zMax, positions.array[i * 3 + 2])) - zMin) * (zMax - zMin);
 
             let color: number[] = evaluate_cmap(value, this.colormap, false);
 
-            colors[i * 3] = color[0];
-            colors[i * 3 + 1] = color[1];
-            colors[i * 3 + 2] = color[2];
+            colors[i * numColors] = color[0];
+            colors[i * numColors + 1] = color[1];
+            colors[i * numColors + 2] = color[2];
+            colors[i * numColors + 3] = 1; // TODO
         }
         geometry.setAttribute(
             "color",
-            new THREE.BufferAttribute(colors, 3)
+            new THREE.BufferAttribute(colors, numColors)
         );
     }
-
-
 
 }
 

@@ -14,9 +14,8 @@ function to2dVector(v: Vector3): Vector2 {
  * 
  * @param points Three points that make up the triangle.
  * 
- * TODO: maybe move this to utils?
  */
-function signedTriangleArea(points: THREE.Vector2[]): number {
+function signedTriangleArea(points: Vector2[]): number {
     let area = (
         points[0].x * points[1].y +
         points[1].x * points[2].y +

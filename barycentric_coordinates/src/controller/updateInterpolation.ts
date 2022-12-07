@@ -1,4 +1,4 @@
-import { Interpolation } from "../interpolation"
+import { Interpolation } from "../model/interpolation"
 
 
 class UpdateAction {
@@ -9,7 +9,7 @@ class UpdateAction {
     }
 
     fireUpdate(){
-        
+
     }
 
 

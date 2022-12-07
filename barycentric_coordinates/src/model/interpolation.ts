@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import { mod, to2dVector, signedTriangleArea } from "./utils";
+import { mod, to2dVector, signedTriangleArea } from "../utils";
 
-import { evaluate_cmap } from "./ts-colormaps.js";
+import { evaluate_cmap } from "../ts-colormaps.js";
 import { BarycentricGeometry } from "./BarycentricGeometry";
 
 class Interpolation {

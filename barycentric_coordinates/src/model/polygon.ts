@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { Vector2, Vector3} from "three";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { Line2 } from "three/examples/jsm/lines/Line2";
@@ -8,19 +8,22 @@ class Polygon {
     lineThickness = 0.002;
     points: THREE.Vector3[];
     material: LineMaterial;
+    boundingBox: number[]= []; // [xmin ymin xmax ymax], Z coordinate is not needed and thus not computed.
 
     constructor(numPoints: number, radius: number, z = 0) {
         this.points = [];
         for (let i = 0; i < numPoints; i++) {
             let x = radius * Math.cos(i * 2 * Math.PI / numPoints);
             let y = radius * Math.sin(i * 2 * Math.PI / numPoints);
-            this.points.push(new THREE.Vector3(x, y, z));
+            this.points.push(new Vector3(x, y, z));
         }
 
         this.material = new LineMaterial({
             color: this.color,
             linewidth: this.lineThickness,
         });
+
+        this.computeBoundingBox();
     }
 
     generateMesh(): THREE.Mesh {
@@ -45,6 +48,25 @@ class Polygon {
         return mesh;
     }
 
+    computeBoundingBox() {
+        let xMin = Infinity;
+        let xMax = -Infinity;
+        let yMin = Infinity;
+        let yMax = -Infinity;
+
+        for (let i = 0; i < this.points.length; i++) {
+            let point = this.points[i];
+            xMin = Math.min(xMin, point.x);
+            xMax = Math.max(xMax, point.x);
+            yMin = Math.min(yMin, point.y);
+            yMax = Math.max(yMax, point.y);
+        }
+
+        this.boundingBox[0] = xMin;
+        this.boundingBox[1] = yMin;
+        this.boundingBox[2] = xMax;
+        this.boundingBox[3] = yMax;
+    }
     /*
     TODO
     isInPolygon(point: THREE.Vector2): boolean {

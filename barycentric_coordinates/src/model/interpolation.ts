@@ -1,26 +1,28 @@
 import * as THREE from "three";
 import { mod, to2dVector, signedTriangleArea } from "./utils";
 import { evaluate_cmap } from "./colormaps.js";
-import { BarycentricGeometry } from "./BarycentricGeometry";
+import { ParametricGeometry } from "three/examples/jsm/geometries/ParametricGeometry"
+
 import * as c_fun from "./cFunctions";
+import { Polygon } from "./polygon";
 
 
 class Interpolation {
     readonly name = "interpolation";
     params = {
-        c_function: c_fun.powRP, 
+        c_function: c_fun.powRP,
         p: 1,
         slices: 100,
         colormap: "viridis",
         wireframe: false,
     }
     material: THREE.MeshBasicMaterial;
-    points: THREE.Vector3[];
-    mesh = new THREE.Mesh(); //immediately replaced with other mesh but allows easier code elsewhere.
+    polygon: Polygon;
+    mesh = new THREE.Mesh(); //removed when generateMesh is called.
 
-    constructor(material: THREE.MeshBasicMaterial, points: THREE.Vector3[]) {
+    constructor(material: THREE.MeshBasicMaterial, polygon: Polygon) {
         this.material = material;
-        this.points = points;
+        this.polygon = polygon;
     }
 
     bivariteFunction(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
@@ -30,23 +32,23 @@ class Interpolation {
     }
 
     calculateWeight(x: THREE.Vector2, idx: number) {
-        const numPoints = this.points.length;
+        const numPoints = this.polygon.points.length;
 
         const idxPrev = mod(idx - 1, numPoints);
         const idxNext = mod(idx + 1, numPoints);
 
-        const pPrev = to2dVector(this.points[idxPrev]);
-        const p = to2dVector(this.points[idx]);
-        const pNext = to2dVector(this.points[idxNext]);
+        const pPrev = to2dVector(this.polygon.points[idxPrev]);
+        const p = to2dVector(this.polygon.points[idx]);
+        const pNext = to2dVector(this.polygon.points[idxNext]);
 
         const APrev = signedTriangleArea([x, pPrev, p]);
         const A = signedTriangleArea([x, p, pNext]);
         const B = signedTriangleArea([x, pPrev, pNext]);
 
         const weight = (
-            this.bivariteFunction(x, this.points, idxNext) * APrev -
-            this.bivariteFunction(x, this.points, idx) * B +
-            this.bivariteFunction(x, this.points, idxPrev) * A
+            this.bivariteFunction(x, this.polygon.points, idxNext) * APrev -
+            this.bivariteFunction(x, this.polygon.points, idx) * B +
+            this.bivariteFunction(x, this.polygon.points, idxPrev) * A
         ) / (APrev * A);
 
         return weight;
@@ -56,15 +58,15 @@ class Interpolation {
         const vector = new THREE.Vector2(xCoord, yCoord);
         let weights = [];
         let sumWeights = 0;
-        for (let idx = 0; idx < this.points.length; idx++) {
+        for (let idx = 0; idx < this.polygon.points.length; idx++) {
             weights.push(this.calculateWeight(vector, idx));
             sumWeights += weights[idx];
         }
 
         let zCoord = 0;
 
-        for (let idx = 0; idx < this.points.length; idx++) {
-            let p = this.points[idx];
+        for (let idx = 0; idx < this.polygon.points.length; idx++) {
+            let p = this.polygon.points[idx];
             const lambda = weights[idx] / sumWeights;
             zCoord += p.z * lambda;
         }
@@ -75,17 +77,24 @@ class Interpolation {
     generateMesh() {
         this.material.wireframe = this.params.wireframe;
 
-        let testFunction = (u: number, v: number, target: THREE.Vector3) => {
-            const temp = 7;   //  TODO:remove this 
+        const Eps = 0.0001 //Offset to prevent division by 0 on the polygon's points
+        const uMin = this.polygon.boundingBox[0] + Eps;
+        const uMax = this.polygon.boundingBox[2] - Eps;
+        const uRange = uMax - uMin;
 
-            u = u * temp - (temp / 2);
-            v = v * temp - (temp / 2);
+        const vMin = this.polygon.boundingBox[1] + Eps;
+        const vMax = this.polygon.boundingBox[3] - Eps;
+        const vRange = vMax - vMin;
+
+        let testFunction = (u: number, v: number, target: THREE.Vector3) => {
+            u = uMin + u * uRange;
+            v = vMin + v * vRange;
 
             const z = this.interpolate(u, v);
             target.set(u, v, z);
         };
 
-        const geometry = new BarycentricGeometry(testFunction, this.params.slices, this.params.slices);
+        const geometry = new ParametricGeometry(testFunction, this.params.slices, this.params.slices);
 
         this.applyColorMap(geometry);
 
@@ -93,8 +102,11 @@ class Interpolation {
         this.mesh.name = this.name;
     }
 
-    applyColorMap(geometry: BarycentricGeometry) {
+    applyColorMap(geometry: ParametricGeometry) {
         const positions = geometry.getAttribute("position");
+
+        console.log(positions);
+
         const count = positions.count
 
         const zMin = 0;

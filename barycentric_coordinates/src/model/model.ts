@@ -13,7 +13,7 @@ import { MainView } from '../view/mainView';
 class Model {
     scene: THREE.Scene;
     view: MainView;
-    controls: MapControls;  //TODO: Change this 
+    controls: MapControls;
 
     polygon: Polygon;
     interpolation: Interpolation;
@@ -31,7 +31,7 @@ class Model {
         const polygonMesh = this.polygon.generateMesh();
         this.scene.add(polygonMesh);
 
-        this.interpolation = new Interpolation(new THREE.MeshBasicMaterial({ wireframe: false, side: THREE.DoubleSide, vertexColors: true, transparent: true }), this.polygon.points);
+        this.interpolation = new Interpolation(new THREE.MeshBasicMaterial({ wireframe: false, side: THREE.DoubleSide, vertexColors: true, transparent: true }), this.polygon);
         this.interpolation.generateMesh();
 
         this.scene.add(this.interpolation.mesh);

@@ -8,24 +8,27 @@
 import {
     BufferGeometry,
     Float32BufferAttribute,
+    Vector2,
     Vector3
 } from 'three';
 
-class BarycentricGeometry extends BufferGeometry {
+class BarycentricGeometry extends BufferGeometry { // CURRENTLY UNUSED
     parameters: {
         func: (u: number, v: number, target: Vector3) => void,
+        points: Vector3[],
         slices: number,
         stacks: number
     }
 
-    constructor(func = (u: number, v: number, target: Vector3) => { target.set(u, v, Math.cos(u) * Math.sin(v)) }, slices = 8, stacks = 8) {
+    constructor(func = (u: number, v: number, target: Vector3) => { target.set(u, v, Math.cos(u) * Math.sin(v)) }, points: Vector3[], slices = 8, stacks = 8) {
 
         super();
 
-        this.type = 'ParametricGeometry';
+        this.type = 'BarycentricGeometry';
 
         this.parameters = {
             func: func,
+            points: points,
             slices: slices,
             stacks: stacks
         };
@@ -36,8 +39,6 @@ class BarycentricGeometry extends BufferGeometry {
         const vertices = [];
         const normals = [];
         const uvs = [];
-
-        const EPS = 0.00001;
 
         const normal = new Vector3();
 
@@ -66,26 +67,26 @@ class BarycentricGeometry extends BufferGeometry {
 
                 // approximate tangent vectors via finite differences
 
-                if (u - EPS >= 0) {
+                if (u >= 0) {
 
-                    func(u - EPS, v, p1);
+                    func(u, v, p1);
                     pu.subVectors(p0, p1);
 
                 } else {
 
-                    func(u + EPS, v, p1);
+                    func(u, v, p1);
                     pu.subVectors(p1, p0);
 
                 }
 
-                if (v - EPS >= 0) {
+                if (v >= 0) {
 
-                    func(u, v - EPS, p1);
+                    func(u, v, p1);
                     pv.subVectors(p0, p1);
 
                 } else {
 
-                    func(u, v + EPS, p1);
+                    func(u, v, p1);
                     pv.subVectors(p1, p0);
 
                 }

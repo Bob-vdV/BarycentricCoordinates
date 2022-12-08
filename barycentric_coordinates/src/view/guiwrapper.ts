@@ -33,7 +33,7 @@ class GuiWrapper {
         let interpolationFolder = this.gui.addFolder("Interpolation options");
 
         interpolationFolder.add(this.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)"]).onChange(function (c_function) {
-            switch(c_function){//Definitely not the ideal solution, but at least it works and it is fast.
+            switch(c_function){ // Definitely not the ideal solution, but at least it works and it is fast(unlike eval-expr Parser).
                 case "r^p":
                     interpolationParams["c_function"] = c_fun.powRP;
                     break;
@@ -47,7 +47,7 @@ class GuiWrapper {
                     interpolationParams["c_function"] = c_fun.sqRdiv1sqR;
                     break;
                 default:
-                    throw Error("C function is not recognized");
+                    throw new Error("C function is not recognized");
             }
         });
 

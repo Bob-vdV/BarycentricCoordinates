@@ -1,6 +1,6 @@
 import { GUI } from "dat.gui";
 import { Model } from "../model/model";
-import { Parser } from "expr-eval";
+import { CustomParser} from "../model/customParser";
 
 class GuiWrapper {
     parameters: object;
@@ -33,7 +33,8 @@ class GuiWrapper {
         let interpolationFolder = this.gui.addFolder("Interpolation options");
 
         interpolationFolder.add(this.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)"]).onChange(function (c_function) {
-            interpolationParams["c_function"] = Parser.parse(c_function).toJSFunction("r,p");
+            interpolationParams["c_function"] = CustomParser.getinstance().parse(c_function).toJSFunction("r,p");
+            console.log(interpolationParams["c_function"]);
         });
 
         interpolationFolder.add(this.parameters, "p").min(-2).max(2).step(0.5).onChange(function (p) {

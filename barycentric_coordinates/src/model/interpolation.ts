@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { mod, to2dVector, signedTriangleArea } from "./utils";
-import { evaluate_cmap } from "./ts-colormaps.js";
+import { evaluate_cmap } from "./colormaps.js";
 import { BarycentricGeometry } from "./BarycentricGeometry";
-import { Parser } from "expr-eval";
+import * as c_fun from "./cFunctions";
+
 
 class Interpolation {
     readonly name = "interpolation";
     params = {
-        c_function: Parser.parse("r^p").toJSFunction("r,p"),
+        c_function: c_fun.powRP, 
         p: 1,
         slices: 100,
         colormap: "viridis",

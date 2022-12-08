@@ -1,6 +1,6 @@
 import { GUI } from "dat.gui";
 import { Model } from "../model/model";
-import { CustomParser} from "../model/customParser";
+import * as c_fun from "../model/cFunctions";
 
 class GuiWrapper {
     parameters: object;
@@ -33,8 +33,22 @@ class GuiWrapper {
         let interpolationFolder = this.gui.addFolder("Interpolation options");
 
         interpolationFolder.add(this.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)"]).onChange(function (c_function) {
-            interpolationParams["c_function"] = CustomParser.getinstance().parse(c_function).toJSFunction("r,p");
-            console.log(interpolationParams["c_function"]);
+            switch(c_function){//Definitely not the ideal solution, but at least it works and it is fast.
+                case "r^p":
+                    interpolationParams["c_function"] = c_fun.powRP;
+                    break;
+                case "log(1+r)":
+                    interpolationParams["c_function"] = c_fun.log1R;
+                    break;
+                case "r/(1+r)":
+                    interpolationParams["c_function"] = c_fun.RDiv1R;
+                    break;
+                case "r^2/(1+r^2)":
+                    interpolationParams["c_function"] = c_fun.sqRdiv1sqR;
+                    break;
+                default:
+                    throw Error("C function is not recognized");
+            }
         });
 
         interpolationFolder.add(this.parameters, "p").min(-2).max(2).step(0.5).onChange(function (p) {

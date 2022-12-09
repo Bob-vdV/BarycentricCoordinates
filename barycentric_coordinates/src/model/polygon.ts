@@ -1,14 +1,17 @@
-import { Vector2, Vector3} from "three";
+import { Vector2, Vector3 } from "three";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { Line2 } from "three/examples/jsm/lines/Line2";
+import { to2dVector } from "./utils";
+import { Edge } from "./edge";
 
 class Polygon {
     color = 0xFF6347;
     lineThickness = 0.002;
     points: THREE.Vector3[];
     material: LineMaterial;
-    boundingBox: number[]= []; // [xmin ymin xmax ymax], Z coordinate is not needed and thus not computed.
+    boundingBox: number[] = []; // [xmin ymin xmax ymax], Z coordinate is not needed and thus not computed.
+    edgeTable!: Vector2[][];
 
     constructor(numPoints: number, radius: number, z = 0) {
         this.points = [];
@@ -24,6 +27,7 @@ class Polygon {
         });
 
         this.computeBoundingBox();
+        this.getEdgeTable();
     }
 
     generateMesh(): THREE.Mesh {
@@ -67,31 +71,59 @@ class Polygon {
         this.boundingBox[2] = xMax;
         this.boundingBox[3] = yMax;
     }
-    /*
-    TODO
-    isInPolygon(point: THREE.Vector2): boolean {
 
-        let min_x = Infinity;
-        let max_x = -Infinity;
+    getEdgeTable() {
+        let edgeTable = [];
 
-        for (let i =0;i<this.points.length;i++){
-            let curr_x = this.points[i].x;
+        for (let i = 0; i < this.points.length; i++) {
+            const curr = to2dVector(this.points[i]);
+            const next = to2dVector(this.points[(i + 1) % this.points.length]);
 
-            if (min_x > curr_x){
-                min_x = curr_x;
-            } else if (max_x > curr_x){
-                max_x = curr_x;
+            if (curr.y != next.y) {
+                if (curr.y < next.y) { // add point with lowest y as first element
+                    edgeTable.push([curr, next]);
+                } else {
+                    edgeTable.push([next, curr]);
+                }
             }
         }
 
-        const x_range = max_x - min_x;
+        const compareLowerY = (edgeA: Vector2[], edgeB: Vector2[]): number => {
+            if (edgeA[0].y < edgeB[0].y) {
+                return -1;
+            }
+            if (edgeA[0].y > edgeB[0].y) {
+                return 1;
+            }
+            return 0;
+        };
 
+        edgeTable.sort(compareLowerY);
 
-
-
-
+        this.edgeTable = edgeTable;
     }
-    */
+
+    // TODO: VERY INEFFICIENT: fix this bottleneck with a scanline algorithm.
+    isInPolygon(xCoord: number, yCoord: number): boolean {
+        const edgeTable = this.edgeTable;
+
+        let xRange = this.boundingBox[2] - this.boundingBox[0];
+        let horizontalEdge = new Edge(xCoord, yCoord, xCoord + xRange, yCoord);
+
+        let numIntersects = 0;
+
+        for (let i=0;i<edgeTable.length;i++){
+            let edge = new Edge(edgeTable[i][0].x, edgeTable[i][0].y, edgeTable[i][1].x, edgeTable[i][1].y);
+            if (horizontalEdge.intersectsWith(edge)){
+                numIntersects++;
+            }
+        }
+
+        if (numIntersects % 2 == 1) {
+            return true
+        }
+        return false;
+    }
 }
 
 export { Polygon }

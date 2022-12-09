@@ -12,13 +12,13 @@ class Interpolation {
     params = {
         c_function: c_fun.powRP,
         p: 1,
-        slices: 100,
+        slices: 200,
         colormap: "viridis",
         wireframe: false,
     }
     material: THREE.MeshBasicMaterial;
     polygon: Polygon;
-    mesh = new THREE.Mesh(); //removed when generateMesh is called.
+    mesh!: THREE.Mesh;
 
     constructor(material: THREE.MeshBasicMaterial, polygon: Polygon) {
         this.material = material;
@@ -77,7 +77,7 @@ class Interpolation {
     generateMesh() {
         this.material.wireframe = this.params.wireframe;
 
-        const Eps = 0.0001 //Offset to prevent division by 0 on the polygon's points
+        const Eps = 0.001 //Offset to prevent division by 0 on the polygon's points
         const uMin = this.polygon.boundingBox[0] + Eps;
         const uMax = this.polygon.boundingBox[2] - Eps;
         const uRange = uMax - uMin;
@@ -86,7 +86,7 @@ class Interpolation {
         const vMax = this.polygon.boundingBox[3] - Eps;
         const vRange = vMax - vMin;
 
-        let testFunction = (u: number, v: number, target: THREE.Vector3) => {
+        let wrapperFunction = (u: number, v: number, target: THREE.Vector3) => {
             u = uMin + u * uRange;
             v = vMin + v * vRange;
 
@@ -94,7 +94,7 @@ class Interpolation {
             target.set(u, v, z);
         };
 
-        const geometry = new ParametricGeometry(testFunction, this.params.slices, this.params.slices);
+        const geometry = new ParametricGeometry(wrapperFunction, this.params.slices, this.params.slices);
 
         this.applyColorMap(geometry);
 
@@ -104,19 +104,19 @@ class Interpolation {
 
     applyColorMap(geometry: ParametricGeometry) {
         const positions = geometry.getAttribute("position");
-
-        console.log(positions);
+        const numDims = positions.itemSize;
 
         const count = positions.count
 
-        const zMin = 0;
+        const zMin = 0; //TODO: make flexible?
         const zMax = 1;
+        const zRange = zMax - zMin;
 
         const numColors = 4;
 
         let colors = new Float32Array(count * numColors);
         for (let i = 0; i < count; i++) {
-            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * 3 + 2])) - zMin) * (zMax - zMin);
+            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin) * zRange;
 
             if (isNaN(value)) {
                 console.error("value at ", i, " is NaN");
@@ -127,7 +127,13 @@ class Interpolation {
             colors[i * numColors] = color[0];
             colors[i * numColors + 1] = color[1];
             colors[i * numColors + 2] = color[2];
-            colors[i * numColors + 3] = 1; // TODO
+
+            if (this.polygon.isInPolygon(positions.array[i * numDims], positions.array[i * numDims + 1])) {
+                colors[i * numColors + 3] = 1;
+            } else {
+                colors[i * numColors + 3] = 0;
+            }
+
         }
         geometry.setAttribute(
             "color",

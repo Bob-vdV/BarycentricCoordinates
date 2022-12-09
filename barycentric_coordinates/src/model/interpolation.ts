@@ -140,7 +140,6 @@ class Interpolation {
             new THREE.BufferAttribute(colors, numColors)
         );
     }
-
 }
 
 export { Interpolation }

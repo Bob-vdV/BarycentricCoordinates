@@ -25,7 +25,7 @@ class Model {
          * Setup objects
          * 
          */
-        this.polygon = new Polygon(5, 3);
+        this.polygon = new Polygon(6, 3);
         this.polygon.points[0].z = 1;
 
         const polygonMesh = this.polygon.generateMesh();

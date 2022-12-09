@@ -114,7 +114,7 @@ class Polygon {
 
         for (let i=0;i<edgeTable.length;i++){
             let edge = new Edge(edgeTable[i][0].x, edgeTable[i][0].y, edgeTable[i][1].x, edgeTable[i][1].y);
-            if (horizontalEdge.intersectsWith(edge)){
+            if (horizontalEdge.intersectsWith(edge) && edge.highY!=yCoord){ // extra check for when horizontal goes through point (and thus two edges)
                 numIntersects++;
             }
         }

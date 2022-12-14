@@ -128,6 +128,7 @@ class Interpolation {
             colors[i * numColors + 1] = color[1];
             colors[i * numColors + 2] = color[2];
 
+            // Make outside of polygon invisible
             if (this.polygon.isInPolygon(positions.array[i * numDims], positions.array[i * numDims + 1])) {
                 colors[i * numColors + 3] = 1;
             } else {

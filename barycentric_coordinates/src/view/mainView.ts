@@ -2,6 +2,9 @@ import { Model } from "../model/model"
 import * as THREE from "three";
 import { GuiWrapper } from "./guiwrapper"
 
+import {DragControls } from "three/examples/jsm/controls/DragControls";
+
+
 class MainView {
     readonly windowWidth: number;
     readonly windowHeight: number;
@@ -39,6 +42,8 @@ class MainView {
             this.onWindowResize();
         }, false);
 
+
+        let test = new DragControls([this.model.polygon.mesh], this.camera, this.renderer.domElement);
 
         this.gui = new GuiWrapper(model);
     }

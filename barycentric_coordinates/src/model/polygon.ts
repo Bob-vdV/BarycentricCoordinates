@@ -1,4 +1,4 @@
-import { Vector2, Vector3 } from "three";
+import * as THREE from "three";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { Line2 } from "three/examples/jsm/lines/Line2";
@@ -6,19 +6,21 @@ import { to2dVector } from "./utils";
 import { Edge } from "./edge";
 
 class Polygon {
+    readonly name = "polygon";
     color = 0xFF6347;
     lineThickness = 0.002;
     points: THREE.Vector3[];
     material: LineMaterial;
     boundingBox: number[] = []; // [xmin ymin xmax ymax], Z coordinate is not needed and thus not computed.
-    edgeTable!: Vector2[][];
+    edgeTable!: THREE.Vector2[][];
+    mesh!: THREE.Group;
 
     constructor(numPoints: number, radius: number, z = 0) {
         this.points = [];
         for (let i = 0; i < numPoints; i++) {
             let x = radius * Math.cos(i * 2 * Math.PI / numPoints);
             let y = radius * Math.sin(i * 2 * Math.PI / numPoints);
-            this.points.push(new Vector3(x, y, z));
+            this.points.push(new THREE.Vector3(x, y, z));
         }
 
         this.material = new LineMaterial({
@@ -30,7 +32,9 @@ class Polygon {
         this.getEdgeTable();
     }
 
-    generateMesh(): THREE.Mesh {
+    generateMesh(){
+        this.mesh = new THREE.Group();
+
         const geometry = new LineGeometry();
         let positions = [];
         for (let i = 0; i < this.points.length; i++) {
@@ -45,11 +49,22 @@ class Polygon {
         positions.push(this.points[0].z);
 
         geometry.setPositions(positions);
-        const mesh = new Line2(geometry, this.material);
-        mesh.computeLineDistances();
-        mesh.scale.set(1, 1, 1);
+        const lines = new Line2(geometry, this.material);
+        lines.computeLineDistances();
+        lines.scale.set(1, 1, 1);
 
-        return mesh;
+        this.mesh.add(lines);
+
+        //TODO: refactor
+        const material = new THREE.MeshBasicMaterial( {color: 0xcc0000});
+        const radius = 0.05;
+        const slices = 20;
+
+        // Generate the spheres at each point
+        for (let i =0;i<this.points.length;i++){
+            let sphere = new THREE.SphereGeometry(radius, slices, slices).translate(this.points[i].x, this.points[i].y, this.points[i].z);
+            this.mesh.add(new THREE.Mesh(sphere, material));
+        }
     }
 
     computeBoundingBox() {
@@ -88,7 +103,7 @@ class Polygon {
             }
         }
 
-        const compareLowerY = (edgeA: Vector2[], edgeB: Vector2[]): number => {
+        const compareLowerY = (edgeA: THREE.Vector2[], edgeB: THREE.Vector2[]): number => {
             if (edgeA[0].y < edgeB[0].y) {
                 return -1;
             }

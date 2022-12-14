@@ -1,6 +1,7 @@
 import { GUI } from "dat.gui";
 import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
+import { UpdateAction } from "../controller/actions/updateAction";
 
 class GuiWrapper {
     parameters: object;
@@ -11,14 +12,17 @@ class GuiWrapper {
         this.gui = new GUI();
         this.model = model;
 
+        let interpolationUpdater = new UpdateAction(model.interpolation, model.scene);
+
         this.parameters = {
             "p": 1,
             "c_function": "r^p",
             "colormap": "viridis",
             "wireframe": false,
             "slices": model.interpolation.params.slices,
-            "update": function () { model.updateInterpolation() },
+            "update": function () { interpolationUpdater.update(); },
         }
+        
 
         this.initInterpolationFolder();
 

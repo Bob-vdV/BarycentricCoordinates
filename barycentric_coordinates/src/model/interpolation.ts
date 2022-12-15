@@ -76,6 +76,7 @@ class Interpolation {
 
     generateMesh() {
         this.material.wireframe = this.params.wireframe;
+        this.polygon.computeBoundingBox();
 
         const Eps = 0.001 //Offset to prevent division by 0 on the polygon's points
         const uMin = this.polygon.boundingBox[0] + Eps;
@@ -108,21 +109,23 @@ class Interpolation {
 
         const count = positions.count
 
-        const zMin = 0; //TODO: make flexible?
-        const zMax = 1;
+        const arr = this.polygon.points.map(point=>point.z);
+        const zMin = Math.min.apply(null, arr);
+        const zMax = Math.max.apply(null, arr);
+
         const zRange = zMax - zMin;
 
         const numColors = 4;
 
         let colors = new Float32Array(count * numColors);
         for (let i = 0; i < count; i++) {
-            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin) * zRange;
+            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin) ;
 
             if (isNaN(value)) {
                 console.error("value at ", i, " is NaN");
                 continue;
             }
-            let color: number[] = evaluate_cmap(value, this.params.colormap, false);
+            let color: number[] = evaluate_cmap(value / zRange, this.params.colormap, false);
 
             colors[i * numColors] = color[0];
             colors[i * numColors + 1] = color[1];
@@ -134,6 +137,8 @@ class Interpolation {
             } else {
                 colors[i * numColors + 3] = 0;
             }
+
+            colors[i * numColors + 3] = 1; //TODO: fix isInPolygon thingy
 
         }
         geometry.setAttribute(

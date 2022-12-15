@@ -13,9 +13,9 @@ class Polygon {
     material: LineMaterial;
     boundingBox: number[] = []; // [xmin ymin xmax ymax], Z coordinate is not needed and thus not computed.
     edgeTable!: THREE.Vector2[][];
-    group = new THREE.Group();
+    mesh = new THREE.Group();
     lines: THREE.Mesh | null = null;
-    corners!: THREE.Mesh;
+    corners = new THREE.Group();
 
     constructor(numPoints: number, radius: number, z = 0) {
         this.points = [];
@@ -35,9 +35,6 @@ class Polygon {
     }
 
     generateLines() {
-
-
-
         const geometry = new LineGeometry();
         let positions = [];
         for (let i = 0; i < this.points.length; i++) {
@@ -56,14 +53,14 @@ class Polygon {
         lines.computeLineDistances();
         lines.scale.set(1, 1, 1);
 
-        this.group.add(lines);
+        this.mesh.add(lines);
     }
 
     generateCorners() {
-        this.corners = new THREE.Group();
+        this.corners.clear();
 
         //TODO: refactor
-        const material = new THREE.MeshLambertMaterial({ color: 0xcc0000,transparent:true, opacity:0.6 });
+        const material = new THREE.MeshLambertMaterial({ color: 0xcc0000, transparent: true, opacity: 0.6 });
         const radius = 0.05;
         const slices = 20;
 
@@ -73,17 +70,17 @@ class Polygon {
             sphere.name = "point" + i;
             this.corners.add(new THREE.Mesh(sphere, material));
         }
-        this.group.add(this.corners);
+        this.mesh.add(this.corners);
     }
 
 
 
     generateMesh() {
-        this.group.clear();
+        this.mesh.clear();
         this.generateLines();
         this.generateCorners();
 
-        this.group.name = this.name;
+        this.mesh.name = this.name;
     }
 
     computeBoundingBox() {

@@ -3,7 +3,6 @@ import { Polygon } from './polygon';
 import { Interpolation } from './interpolation';
 import { MainView } from '../view/mainView';
 import { MapControls } from 'three/examples/jsm/controls/OrbitControls';
-import { ContextMenuControls } from '../controller/ContextMenuControls';
 
 /**
  * Main model that is run
@@ -34,7 +33,7 @@ class Model {
         this.polygon.points[0].z = 1;
 
         this.polygon.generateMesh();
-        this.scene.add(this.polygon.group);
+        this.scene.add(this.polygon.mesh);
 
         this.interpolation = new Interpolation(new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true, transparent: true }), this.polygon);
         this.interpolation.generateMesh();
@@ -53,16 +52,6 @@ class Model {
          * 
          */
         this.controls = new MapControls(this.view.camera, this.view.labelRenderer.domElement);
-
-        let test = new ContextMenuControls([this.polygon.group], this.view.camera, this.view.labelRenderer.domElement);
-
-        /*
-        const dragPolyAction = new DragPolygonAction(this.polygon, this.scene);
-
-        
-        this.controls.addEventListener("drag", (event:any) => { 
-            console.log(event);
-            dragPolyAction.update(event); });*/
 
     }
 

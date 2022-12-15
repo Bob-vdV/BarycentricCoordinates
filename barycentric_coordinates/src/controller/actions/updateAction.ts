@@ -1,11 +1,12 @@
 import { Interpolation } from "../../model/interpolation"
+import { Polygon } from "../../model/polygon";
 
 
 class UpdateAction {
-    figure: Interpolation;
+    figure: Interpolation | Polygon;
     scene: THREE.Scene;
 
-    constructor(figure: Interpolation, scene: THREE.Scene) {
+    constructor(figure: Interpolation | Polygon, scene: THREE.Scene) {
         this.figure = figure;
         this.scene = scene;
     }

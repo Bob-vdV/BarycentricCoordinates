@@ -18,7 +18,7 @@ class UpdateAction{
         if (mesh != undefined) {
             this.scene.remove(mesh);
         } else {
-            throw new Error("Object 'interpolation' not defined!");
+            throw new Error("Object not defined!");
         }
         this.scene.add(this.figure.mesh);
     }

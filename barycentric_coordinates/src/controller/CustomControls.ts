@@ -1,7 +1,10 @@
 import {
 	EventDispatcher,
+	Matrix4,
 	MOUSE,
+	Plane,
 	Quaternion,
+	Raycaster,
 	Spherical,
 	TOUCH,
 	Vector2,
@@ -46,6 +49,7 @@ class OrbitControls extends EventDispatcher {
 	// Touch fingers
 	touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
 
+	objects: THREE.Object3D[];
 	camera: THREE.PerspectiveCamera;
 	domElement: any;
 	enabled: boolean;
@@ -64,9 +68,10 @@ class OrbitControls extends EventDispatcher {
 
 	update: () => void;
 
-	constructor(camera: THREE.PerspectiveCamera, domElement: any) {
+	constructor(objects: THREE.Object3D[], camera: THREE.PerspectiveCamera, domElement: any) {
 		super();
 
+		this.objects = objects;
 		this.camera = camera;
 		this.domElement = domElement;
 		this.domElement.style.touchAction = "none"; // disable touch scroll
@@ -81,6 +86,24 @@ class OrbitControls extends EventDispatcher {
 		this.target0 = this.target.clone();
 		this.position0 = this.camera.position.clone();
 		this.zoom0 = this.camera.zoom;
+
+
+		// Variables for dragging/selecting objects
+		const _plane = new Plane();
+		const _raycaster = new Raycaster();
+		const _intersection = new Vector3();
+		const _worldPosition = new Vector3();
+		const _inverseMatrix = new Matrix4();
+
+		const pointerLocation = new Vector2();
+		const _offset = new Vector3();
+
+		let _selected: THREE.Object3D<THREE.Event> | null = null;
+		let _hovered = null;
+
+
+		const _intersections: THREE.Intersection<THREE.Object3D<Event>>[] = [];
+		
 
 		//
 		// public methods
@@ -210,6 +233,8 @@ class OrbitControls extends EventDispatcher {
 
 			scope.domElement.removeEventListener("pointermove", onPointerMove);
 			scope.domElement.removeEventListener("pointerup", onPointerUp);
+
+			scope.domElement.style.cursor = '';
 		};
 
 		//
@@ -524,6 +549,32 @@ class OrbitControls extends EventDispatcher {
 		function onPointerDown(event: any) {
 			if (scope.enabled === false) return;
 
+			updatePointerLocation(event);
+
+			_intersections.length = 0;
+
+			_raycaster.setFromCamera( pointerLocation, camera );
+			_raycaster.intersectObjects( objects, true, _intersections );
+
+			if ( _intersections.length > 0 ) {
+
+				_selected = _intersections[ 0 ].object;
+
+				_plane.setFromNormalAndCoplanarPoint( camera.getWorldDirection( _plane.normal ), _worldPosition.setFromMatrixPosition( _selected.matrixWorld ) );
+
+				if ( _raycaster.ray.intersectPlane( _plane, _intersection ) ) {
+
+					_inverseMatrix.copy( _selected.parent.matrixWorld ).invert();
+					_offset.copy( _intersection ).sub( _worldPosition.setFromMatrixPosition( _selected.matrixWorld ) );
+
+				}
+
+				domElement.style.cursor = 'move';
+
+				scope.dispatchEvent( { type: 'dragstart', object: _selected } );
+
+			}
+
 			if (pointers.length === 0) {
 				scope.domElement.setPointerCapture(event.pointerId);
 
@@ -545,6 +596,74 @@ class OrbitControls extends EventDispatcher {
 		function onPointerMove(event: any) {
 			if (scope.enabled === false) return;
 
+			updatePointerLocation(event);
+
+			_raycaster.setFromCamera(pointerLocation, camera);
+
+			if (_selected) {
+
+				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
+
+					_selected.position.copy(_intersection.sub(_offset).applyMatrix4(_inverseMatrix));
+
+				}
+
+				scope.dispatchEvent({ type: 'drag', object: _selected });
+
+				return;
+
+			}
+
+			// hover support
+
+			if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
+
+				_intersections.length = 0;
+
+				_raycaster.setFromCamera(pointerLocation, camera);
+				_raycaster.intersectObjects(objects, true, _intersections);
+
+				if (_intersections.length > 0) {
+
+					const object = _intersections[0].object;
+
+					_plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(_plane.normal), _worldPosition.setFromMatrixPosition(object.matrixWorld));
+
+					if (_hovered !== object && _hovered !== null) {
+
+						console.log(_hovered)
+
+						scope.dispatchEvent({ type: 'hoveroff', object: _hovered });
+
+						domElement.style.cursor = 'auto';
+						_hovered = null;
+
+					}
+
+					if (_hovered !== object) {
+
+						scope.dispatchEvent({ type: 'hoveron', object: object });
+
+						domElement.style.cursor = 'pointer';
+						_hovered = object;
+
+					}
+
+				} else {
+
+					if (_hovered !== null) {
+
+						scope.dispatchEvent({ type: 'hoveroff', object: _hovered });
+
+						domElement.style.cursor = 'auto';
+						_hovered = null;
+
+					}
+
+				}
+
+			}
+
 			if (event.pointerType === "touch") {
 				onTouchMove(event);
 			} else {
@@ -565,10 +684,32 @@ class OrbitControls extends EventDispatcher {
 			scope.dispatchEvent(_endEvent);
 
 			state = STATE.NONE;
+
+
+			if (scope.enabled === false) return;
+			
+			if (_selected) {
+				scope.dispatchEvent({ type: 'dragend', object: _selected });
+				_selected = null;
+
+			}
+
+			domElement.style.cursor = _hovered ? 'pointer' : 'auto';
+
 		}
 
 		function onPointerCancel(event: any) {
 			removePointer(event);
+
+			if (scope.enabled === false) return;
+
+			if (_selected) {
+				scope.dispatchEvent({ type: 'dragend', object: _selected });
+				_selected = null;
+
+			}
+
+			domElement.style.cursor = _hovered ? 'pointer' : 'auto';
 		}
 
 		function onMouseDown(event: any) {
@@ -780,6 +921,15 @@ class OrbitControls extends EventDispatcher {
 			return pointerPositions[pointer.pointerId];
 		}
 
+		function updatePointerLocation(event: any) { //TODO: remove? Is used for dragControls.
+
+			const rect = domElement.getBoundingClientRect();
+
+			pointerLocation.x = (event.clientX - rect.left) / rect.width * 2 - 1;
+			pointerLocation.y = - (event.clientY - rect.top) / rect.height * 2 + 1;
+
+		}
+
 		//
 
 		scope.domElement.addEventListener("contextmenu", onContextMenu);
@@ -805,8 +955,8 @@ class OrbitControls extends EventDispatcher {
 //    Pan - left mouse / touch: one-finger move
 
 class MapControls extends OrbitControls {
-	constructor(object: THREE.PerspectiveCamera, domElement: any) {
-		super(object, domElement);
+	constructor(objects: THREE.Object3D[], camera: THREE.PerspectiveCamera, domElement: any) {
+		super(objects, camera, domElement);
 
 		this.screenSpacePanning = false; // pan orthogonal to world-space direction camera.up
 

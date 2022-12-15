@@ -3,6 +3,8 @@ import { Polygon } from './polygon';
 import { Interpolation } from './interpolation';
 import { MainView } from '../view/mainView';
 import { MapControls } from '../controller/CustomControls';
+import { UpdateAction } from '../controller/actions/updateAction';
+import { DragPolygonAction } from '../controller/actions/dragPolygonAction';
 
 /**
  * Main model that is run
@@ -47,7 +49,12 @@ class Model {
          * Setup controls
          * 
          */
-        this.controls = new MapControls(this.view.camera, this.view.renderer.domElement);
+        this.controls = new MapControls([this.polygon.mesh], this.view.camera, this.view.renderer.domElement);
+
+        const dragPolyAction = new DragPolygonAction(this.polygon, this.scene);
+        this.controls.addEventListener("drag", (event:any) => { 
+            console.log(event);
+            dragPolyAction.update(event); });
 
     }
 

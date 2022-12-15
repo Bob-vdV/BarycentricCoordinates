@@ -63,8 +63,10 @@ class Polygon {
         // Generate the spheres at each point
         for (let i =0;i<this.points.length;i++){
             let sphere = new THREE.SphereGeometry(radius, slices, slices).translate(this.points[i].x, this.points[i].y, this.points[i].z);
+            sphere.name = "point" + i;
             this.mesh.add(new THREE.Mesh(sphere, material));
         }
+        this.mesh.name = this.name;
     }
 
     computeBoundingBox() {
@@ -118,7 +120,7 @@ class Polygon {
         this.edgeTable = edgeTable;
     }
 
-    // TODO: VERY INEFFICIENT: fix this bottleneck with a scanline algorithm.
+    // TODO: VERY INEFFICIENT: fix this bottleneck and replace with a scanline algorithm.
     isInPolygon(xCoord: number, yCoord: number): boolean {
         const edgeTable = this.edgeTable;
 
@@ -139,6 +141,7 @@ class Polygon {
         }
         return false;
     }
+
 }
 
 export { Polygon }

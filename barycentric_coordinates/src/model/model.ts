@@ -2,9 +2,8 @@ import * as THREE from 'three';
 import { Polygon } from './polygon';
 import { Interpolation } from './interpolation';
 import { MainView } from '../view/mainView';
-import { MapControls } from '../controller/CustomControls';
-import { UpdateAction } from '../controller/actions/updateAction';
-import { DragPolygonAction } from '../controller/actions/dragPolygonAction';
+import { MapControls } from 'three/examples/jsm/controls/OrbitControls';
+import { ContextMenuControls } from '../controller/ContextMenuControls';
 
 /**
  * Main model that is run
@@ -23,6 +22,10 @@ class Model {
     constructor() {
         this.scene = new THREE.Scene();
 
+        const light = new THREE.PointLight( 0xfffff, 100, 20);
+        light.position.set(0,0,15);
+        this.scene.add(light);
+
         /**
          * Setup objects
          * 
@@ -31,7 +34,7 @@ class Model {
         this.polygon.points[0].z = 1;
 
         this.polygon.generateMesh();
-        this.scene.add(this.polygon.mesh);
+        this.scene.add(this.polygon.group);
 
         this.interpolation = new Interpolation(new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true, transparent: true }), this.polygon);
         this.interpolation.generateMesh();
@@ -49,12 +52,17 @@ class Model {
          * Setup controls
          * 
          */
-        this.controls = new MapControls([this.polygon.mesh], this.view.camera, this.view.renderer.domElement);
+        this.controls = new MapControls(this.view.camera, this.view.labelRenderer.domElement);
 
+        let test = new ContextMenuControls([this.polygon.group], this.view.camera, this.view.labelRenderer.domElement);
+
+        /*
         const dragPolyAction = new DragPolygonAction(this.polygon, this.scene);
+
+        
         this.controls.addEventListener("drag", (event:any) => { 
             console.log(event);
-            dragPolyAction.update(event); });
+            dragPolyAction.update(event); });*/
 
     }
 

@@ -13,7 +13,9 @@ class Polygon {
     material: LineMaterial;
     boundingBox: number[] = []; // [xmin ymin xmax ymax], Z coordinate is not needed and thus not computed.
     edgeTable!: THREE.Vector2[][];
-    mesh!: THREE.Group;
+    group = new THREE.Group();
+    lines: THREE.Mesh | null = null;
+    corners!: THREE.Mesh;
 
     constructor(numPoints: number, radius: number, z = 0) {
         this.points = [];
@@ -32,8 +34,9 @@ class Polygon {
         this.getEdgeTable();
     }
 
-    generateMesh(){
-        this.mesh = new THREE.Group();
+    generateLines() {
+
+
 
         const geometry = new LineGeometry();
         let positions = [];
@@ -53,20 +56,34 @@ class Polygon {
         lines.computeLineDistances();
         lines.scale.set(1, 1, 1);
 
-        this.mesh.add(lines);
+        this.group.add(lines);
+    }
+
+    generateCorners() {
+        this.corners = new THREE.Group();
 
         //TODO: refactor
-        const material = new THREE.MeshBasicMaterial( {color: 0xcc0000});
+        const material = new THREE.MeshLambertMaterial({ color: 0xcc0000,transparent:true, opacity:0.6 });
         const radius = 0.05;
         const slices = 20;
 
         // Generate the spheres at each point
-        for (let i =0;i<this.points.length;i++){
+        for (let i = 0; i < this.points.length; i++) {
             let sphere = new THREE.SphereGeometry(radius, slices, slices).translate(this.points[i].x, this.points[i].y, this.points[i].z);
             sphere.name = "point" + i;
-            this.mesh.add(new THREE.Mesh(sphere, material));
+            this.corners.add(new THREE.Mesh(sphere, material));
         }
-        this.mesh.name = this.name;
+        this.group.add(this.corners);
+    }
+
+
+
+    generateMesh() {
+        this.group.clear();
+        this.generateLines();
+        this.generateCorners();
+
+        this.group.name = this.name;
     }
 
     computeBoundingBox() {
@@ -129,9 +146,9 @@ class Polygon {
 
         let numIntersects = 0;
 
-        for (let i=0;i<edgeTable.length;i++){
+        for (let i = 0; i < edgeTable.length; i++) {
             let edge = new Edge(edgeTable[i][0].x, edgeTable[i][0].y, edgeTable[i][1].x, edgeTable[i][1].y);
-            if (horizontalEdge.intersectsWith(edge) && edge.highY!=yCoord){ // extra check for when horizontal goes through point (and thus two edges)
+            if (horizontalEdge.intersectsWith(edge) && edge.highY != yCoord) { // extra check for when horizontal goes through point (and thus two edges)
                 numIntersects++;
             }
         }

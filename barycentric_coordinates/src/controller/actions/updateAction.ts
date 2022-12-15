@@ -1,18 +1,17 @@
 import { Interpolation } from "../../model/interpolation"
-import { Polygon } from "../../model/polygon"
 
 
-class UpdateAction{
-    figure: Polygon | Interpolation;
+class UpdateAction {
+    figure: Interpolation;
     scene: THREE.Scene;
 
-    constructor(figure: Polygon | Interpolation, scene: THREE.Scene){
+    constructor(figure: Interpolation, scene: THREE.Scene) {
         this.figure = figure;
         this.scene = scene;
     }
 
-    update(){
-        this.figure.generateMesh() 
+    update() {
+        this.figure.generateMesh()
 
         let mesh = this.scene.getObjectByName(this.figure.name);
         if (mesh != undefined) {
@@ -25,4 +24,4 @@ class UpdateAction{
 }
 
 
-export {UpdateAction}
+export { UpdateAction }

@@ -11,6 +11,8 @@ import {
 	Vector3,
 } from "three";
 
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
+
 // This set of controls performs orbiting, dollying (zooming), and panning.
 // Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
 //
@@ -99,7 +101,7 @@ class OrbitControls extends EventDispatcher {
 		const _offset = new Vector3();
 
 		let _selected: THREE.Object3D<THREE.Event> | null = null;
-		let _hovered = null;
+		let _hovered: THREE.Object3D<THREE.Event> | null = null;
 
 
 		const _intersections: THREE.Intersection<THREE.Object3D<Event>>[] = [];
@@ -631,8 +633,6 @@ class OrbitControls extends EventDispatcher {
 
 					if (_hovered !== object && _hovered !== null) {
 
-						console.log(_hovered)
-
 						scope.dispatchEvent({ type: 'hoveroff', object: _hovered });
 
 						domElement.style.cursor = 'auto';
@@ -921,7 +921,7 @@ class OrbitControls extends EventDispatcher {
 			return pointerPositions[pointer.pointerId];
 		}
 
-		function updatePointerLocation(event: any) { //TODO: remove? Is used for dragControls.
+		function updatePointerLocation(event: any) { 
 
 			const rect = domElement.getBoundingClientRect();
 

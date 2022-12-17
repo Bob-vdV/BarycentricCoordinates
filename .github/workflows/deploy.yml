@@ -20,6 +20,10 @@ jobs:
           npm run build
 
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: ./barycentric_coordinates/dist # The folder the action should deploy.
+        run: |
+          cd ./barycentric_coordinates
+          gh-pages -d dist
+
+        #uses: JamesIves/github-pages-deploy-action@v4
+        #with:
+          #folder: ./barycentric_coordinates/dist # The folder the action should deploy.

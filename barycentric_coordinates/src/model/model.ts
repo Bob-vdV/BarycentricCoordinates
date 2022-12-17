@@ -19,15 +19,18 @@ class Model {
     interpolation: Interpolation;
 
     constructor() {
+        /**
+         * Setup scene
+         */
         this.scene = new THREE.Scene();
 
-        const light = new THREE.PointLight( 0xfffff, 100, 20);
-        light.position.set(0,0,15);
-        this.scene.add(light);
+        /* TODO: decide to include or delete this
+        const gridHelper = new THREE.GridHelper(20, 10);
+        gridHelper.rotateX(Math.PI/2);
+        this.scene.add(gridHelper);*/
 
         /**
          * Setup objects
-         * 
          */
         this.polygon = new Polygon(6, 3);
         this.polygon.points[0].z = 1;
@@ -42,14 +45,12 @@ class Model {
 
         /**
          * Setup view
-         * 
          */
 
         this.view = new MainView(this);
 
         /**
          * Setup controls
-         * 
          */
         this.controls = new MapControls(this.view.camera, this.view.labelRenderer.domElement);
 

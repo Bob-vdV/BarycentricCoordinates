@@ -113,7 +113,12 @@ class Interpolation {
         const zMin = Math.min.apply(null, arr);
         const zMax = Math.max.apply(null, arr);
 
-        const zRange = zMax - zMin;
+        let zRange = zMax - zMin;
+
+        //Prevent division by 0 when every point is same height. 
+        if(zRange == 0){
+            zRange = Infinity;
+        }
 
         const numColors = 4;
 
@@ -131,14 +136,13 @@ class Interpolation {
             colors[i * numColors + 1] = color[1];
             colors[i * numColors + 2] = color[2];
 
+            
             // Make outside of polygon invisible
             if (this.polygon.isInPolygon(positions.array[i * numDims], positions.array[i * numDims + 1])) {
                 colors[i * numColors + 3] = 1;
             } else {
                 colors[i * numColors + 3] = 0;
             }
-
-            colors[i * numColors + 3] = 1; //TODO: fix isInPolygon thingy
 
         }
         geometry.setAttribute(

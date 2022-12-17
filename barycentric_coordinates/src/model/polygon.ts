@@ -31,7 +31,7 @@ class Polygon {
         });
 
         this.computeBoundingBox();
-        this.getEdgeTable();
+        this.computeEdgeTable();
     }
 
     generateLines() {
@@ -78,7 +78,7 @@ class Polygon {
     generateMesh() {
         this.mesh.clear();
         this.generateLines();
-        this.generateCorners();
+        //this.generateCorners(); //TODO: decide if we want corners
 
         this.mesh.name = this.name;
     }
@@ -103,7 +103,7 @@ class Polygon {
         this.boundingBox[3] = yMax;
     }
 
-    getEdgeTable() {
+    computeEdgeTable() {
         let edgeTable = [];
 
         for (let i = 0; i < this.points.length; i++) {
@@ -136,6 +136,7 @@ class Polygon {
 
     // TODO: VERY INEFFICIENT: fix this bottleneck and replace with a scanline algorithm.
     isInPolygon(xCoord: number, yCoord: number): boolean {
+        this.computeEdgeTable();
         const edgeTable = this.edgeTable;
 
         let xRange = this.boundingBox[2] - this.boundingBox[0];

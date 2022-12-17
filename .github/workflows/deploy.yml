@@ -1,9 +1,19 @@
 #Source: https://github.com/marketplace/actions/deploy-to-github-pages
 name: Build and Deploy
-on: [push]
+on: 
+  push:
+    branches: ["master"]
+  workflow_dispatch:
+    
   
 permissions:
   contents: write
+  pages: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
@@ -22,4 +32,3 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./barycentric_coordinates/dist # The folder the action should deploy.
-          

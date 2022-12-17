@@ -1,7 +1,6 @@
 #Source: https://github.com/marketplace/actions/deploy-to-github-pages
 name: Build and Deploy
-on:     
-  [push]
+on: [push]
   
 permissions:
   contents: write
@@ -17,9 +16,8 @@ jobs:
         run: |
           cd ./barycentric_coordinates
           npm ci
-          npm install --global gh-pages --save-dev
-          npm run build && gh-pages -d dist          
+          npm run build        
 
-        #uses: JamesIves/github-pages-deploy-action@v4
-        #with:
-          #folder: ./barycentric_coordinates/dist # The folder the action should deploy.
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./barycentric_coordinates/dist # The folder the action should deploy.

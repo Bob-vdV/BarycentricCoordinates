@@ -14,7 +14,6 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "watch": true
   },
-  "include": ["src"]
+  "include": ["src", "src/main.ts"]
 }

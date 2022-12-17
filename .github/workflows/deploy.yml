@@ -17,12 +17,7 @@ jobs:
         run: |
           cd ./barycentric_coordinates
           npm ci
-          npm run build
-
-      - name: Deploy 🚀
-        run: |
-          cd ./barycentric_coordinates
-          gh-pages -d dist
+          npm run build && gh-pages -d dist          
 
         #uses: JamesIves/github-pages-deploy-action@v4
         #with:

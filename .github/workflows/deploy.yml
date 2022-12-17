@@ -17,6 +17,7 @@ jobs:
         run: |
           cd ./barycentric_coordinates
           npm ci
+          npm install --global gh-pages --save-dev
           npm run build && gh-pages -d dist          
 
         #uses: JamesIves/github-pages-deploy-action@v4

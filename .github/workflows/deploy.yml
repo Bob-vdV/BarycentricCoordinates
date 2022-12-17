@@ -1,9 +1,7 @@
 #Source: https://github.com/marketplace/actions/deploy-to-github-pages
 name: Build and Deploy
 on:     
-  push:
-    branches:
-      - main
+  [push]
   
 permissions:
   contents: write

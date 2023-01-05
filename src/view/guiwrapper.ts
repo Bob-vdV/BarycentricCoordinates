@@ -27,7 +27,7 @@ class GuiWrapper {
             c_function: "r^p",
             colormap: "viridis",
             wireframe: false,
-            slices: model.interpolation.params.slices,
+            density: model.interpolation.params.density,
             pointIndex: initialIndex,
             x: this.model.polygon.points[initialIndex].x,
             y: this.model.polygon.points[initialIndex].y,
@@ -91,8 +91,8 @@ class GuiWrapper {
                 interpolationUpdater.update();
             })
 
-            viewFolder.add(scope.parameters, "slices").min(10).max(1000).step(10).onFinishChange(function (slices) {
-                interpolationParams["slices"] = slices;
+            viewFolder.add(scope.parameters, "density").min(1).max(8).step(1).onFinishChange(function (density) {
+                interpolationParams["density"] = density;
                 interpolationUpdater.update();
             })
         }

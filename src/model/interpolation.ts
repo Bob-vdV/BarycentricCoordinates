@@ -1,18 +1,16 @@
 import * as THREE from "three";
 import { mod, to2dVector, signedTriangleArea } from "./utils";
 import { evaluate_cmap } from "./colormaps.js";
-import { ParametricGeometry } from "three/examples/jsm/geometries/ParametricGeometry"
-
 import * as c_fun from "./cFunctions";
 import { Polygon } from "./polygon";
-
+import { BarycentricGeometry } from "./barycentricGeometry";
 
 class Interpolation {
     readonly name = "interpolation";
     params = {
         c_function: c_fun.powRP,
         p: 1,
-        slices: 200,
+        density: 6,
         colormap: "viridis",
         wireframe: false,
     }
@@ -76,26 +74,15 @@ class Interpolation {
 
     generateMesh() {
         this.material.wireframe = this.params.wireframe;
-        this.polygon.computeBoundingBox();
+        const Eps = 0.001 // Offset to prevent division by 0 on the polygon's edges
 
-        const Eps = 0.001 //Offset to prevent division by 0 on the polygon's points
-        const uMin = this.polygon.boundingBox[0] + Eps;
-        const uMax = this.polygon.boundingBox[2] - Eps;
-        const uRange = uMax - uMin;
-
-        const vMin = this.polygon.boundingBox[1] + Eps;
-        const vMax = this.polygon.boundingBox[3] - Eps;
-        const vRange = vMax - vMin;
-
-        let wrapperFunction = (u: number, v: number, target: THREE.Vector3) => {
-            u = uMin + u * uRange;
-            v = vMin + v * vRange;
-
-            const z = this.interpolate(u, v);
-            target.set(u, v, z);
+        let wrapperFunction = (u: number, v: number): number => {
+            u += Eps;
+            v += Eps;
+            return this.interpolate(u, v);
         };
 
-        const geometry = new ParametricGeometry(wrapperFunction, this.params.slices, this.params.slices);
+        const geometry = new BarycentricGeometry(this.polygon, wrapperFunction, this.params.density);
 
         this.applyColorMap(geometry);
 
@@ -103,30 +90,29 @@ class Interpolation {
         this.mesh.name = this.name;
     }
 
-    applyColorMap(geometry: ParametricGeometry) {
+    applyColorMap(geometry: THREE.BufferGeometry) {
         const positions = geometry.getAttribute("position");
         const numDims = positions.itemSize;
 
         const count = positions.count
 
-        const arr = this.polygon.points.map(point=>point.z);
+        const arr = this.polygon.points.map(point => point.z);
         const zMin = Math.min.apply(null, arr);
         const zMax = Math.max.apply(null, arr);
 
         let zRange = zMax - zMin;
 
-        //Prevent division by 0 when every point is same height. 
-        if(zRange == 0){
+        // Prevent division by 0 when every point is same height. 
+        if (zRange == 0) {
             zRange = Infinity;
         }
 
-        const numColors = 4;
-
+        const numColors = 3;
         let colors = new Float32Array(count * numColors);
         for (let i = 0; i < count; i++) {
-            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin) ;
+            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin);
 
-            if (isNaN(value)) {
+            if (isNaN(value)) { // Occurs when point is on an edge
                 console.error("value at ", i, " is NaN");
                 continue;
             }
@@ -135,15 +121,6 @@ class Interpolation {
             colors[i * numColors] = color[0];
             colors[i * numColors + 1] = color[1];
             colors[i * numColors + 2] = color[2];
-
-            
-            // Make outside of polygon invisible
-            if (this.polygon.isInPolygon(positions.array[i * numDims], positions.array[i * numDims + 1])) {
-                colors[i * numColors + 3] = 1;
-            } else {
-                colors[i * numColors + 3] = 0;
-            }
-
         }
         geometry.setAttribute(
             "color",

@@ -3,6 +3,7 @@ import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
 import { UpdateAction } from "../controller/actions/updateAction";
 import { Vector3 } from "three";
+import { Polygon } from "../model/polygon";
 
 class GuiWrapper {
     parameters: any;
@@ -70,7 +71,7 @@ class GuiWrapper {
                 interpolationUpdater.update();
             });
 
-            interpolationFolder.add(scope.parameters, "p").min(-2).max(2).step(0.5).onFinishChange( function (p) {
+            interpolationFolder.add(scope.parameters, "p").min(-2).max(2).step(0.5).onFinishChange(function (p) {
                 interpolationParams["p"] = p;
                 interpolationUpdater.update();
             })
@@ -107,42 +108,47 @@ class GuiWrapper {
             let polygonFolder = scope.gui.addFolder("Polygon");
 
             indexController = polygonFolder.add(scope.parameters, "pointIndex", indexes)
-            .onChange(function (index) {
-                scope.parameters.pointIndex = index;
-                updateSliders();
-            });
+                .onChange(function (index) {
+                    scope.parameters.pointIndex = index;
+                    updateSliders();
+                });
 
 
             polygonFolder.add(scope.parameters, "x").min(minCoordVal).max(maxCoordVal).step(step).listen()
-            .onChange(function (x) {
-                model.polygon.points[scope.parameters.pointIndex].x = x;
-                polygonUpdater.update();
-            })
-            .onFinishChange( function () {
-                interpolationUpdater.update();
-            });
+                .onChange(function (x) {
+                    model.polygon.points[scope.parameters.pointIndex].x = x;
+                    polygonUpdater.update();
+                    checkConvex();
+                })
+                .onFinishChange(function () {
+                    interpolationUpdater.update();
+                });
 
             polygonFolder.add(scope.parameters, "y").min(minCoordVal).max(maxCoordVal).step(step).listen()
-            .onChange(function (y) {
-                model.polygon.points[scope.parameters.pointIndex].y = y;
-                polygonUpdater.update();
-            })            
-            .onFinishChange( function () {
-                interpolationUpdater.update();
-            });
+                .onChange(function (y) {
+                    model.polygon.points[scope.parameters.pointIndex].y = y;
+                    polygonUpdater.update();
+                    checkConvex();
+                })
+                .onFinishChange(function () {
+                    interpolationUpdater.update();
+                });
 
             polygonFolder.add(scope.parameters, "z").min(minCoordVal).max(maxCoordVal).step(step).listen()
-            .onChange(function (z) {
-                model.polygon.points[scope.parameters.pointIndex].z = z;
-                polygonUpdater.update();
-            })            
-            .onFinishChange( function () {
-                interpolationUpdater.update();
-            });
+                .onChange(function (z) {
+                    model.polygon.points[scope.parameters.pointIndex].z = z;
+                    polygonUpdater.update();
+                    checkConvex();
+                })
+                .onFinishChange(function () {
+                    interpolationUpdater.update();
+                });
 
             polygonFolder.add(scope.parameters, "deletePoint").name("Delete point");
 
             polygonFolder.add(scope.parameters, "addPoint").name("add new point");
+
+            addWarningHTML();
         }
 
         /**
@@ -203,10 +209,33 @@ class GuiWrapper {
 
             updateDropdown(indexController, indexes);
             updateSliders();
-    
+
             polygonUpdater.update();
             interpolationUpdater.update();
         }
+
+        function checkConvex() {
+            if (!model.polygon.isConvex()) {
+                document.getElementById("polygon-warning")!.style.visibility = "visible"
+            } else {
+                document.getElementById("polygon-warning")!.style.visibility = "hidden"
+            }
+        }
+
+        function addWarningHTML() {
+            // Add html element for Warning if polygon is not convex.
+            let warning = document.createElement('div');
+            warning.id = "polygon-warning";
+            warning.textContent = "Warning: Polygon is not convex";
+            warning.style.position = "absolute";
+            warning.style.top = "10px";
+            warning.style.left = "50%";
+            warning.style.transform = "translate(-50%, 0)"
+            warning.style.color = "red";
+            warning.style.visibility = "hidden";
+            document.body.appendChild(warning);
+        }
+
     }
 }
 

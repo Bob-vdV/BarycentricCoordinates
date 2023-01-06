@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { mod, to2dVector, signedTriangleArea } from "./utils";
+import { mod, toVector2, signedTriangleArea } from "./utils";
 import { evaluate_cmap } from "./colormaps.js";
 import * as c_fun from "./cFunctions";
 import { Polygon } from "./polygon";
@@ -24,7 +24,7 @@ class Interpolation {
     }
 
     bivariteFunction(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
-        const point = to2dVector(points[idx]);
+        const point = toVector2(points[idx]);
         const r = x.distanceTo(point);
         return this.params.c_function(r, this.params.p);
     }
@@ -35,9 +35,9 @@ class Interpolation {
         const idxPrev = mod(idx - 1, numPoints);
         const idxNext = mod(idx + 1, numPoints);
 
-        const pPrev = to2dVector(this.polygon.points[idxPrev]);
-        const p = to2dVector(this.polygon.points[idx]);
-        const pNext = to2dVector(this.polygon.points[idxNext]);
+        const pPrev = toVector2(this.polygon.points[idxPrev]);
+        const p = toVector2(this.polygon.points[idx]);
+        const pNext = toVector2(this.polygon.points[idxNext]);
 
         const APrev = signedTriangleArea([x, pPrev, p]);
         const A = signedTriangleArea([x, p, pNext]);

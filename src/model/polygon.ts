@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { Line2 } from "three/examples/jsm/lines/Line2";
-import { mod } from "./utils";
+import { compute_angle, mod } from "./utils";
 
 class Polygon {
     readonly name = "polygon";
@@ -79,6 +79,17 @@ class Polygon {
         this.mesh.clear();
         this.generateLines();
         this.mesh.name = this.name;
+    }
+
+    isConvex(): boolean {
+        const n = this.points.length;
+        for (let i = 0; i < n; i++) {
+            let angle = compute_angle(this.points[mod(i - 1, n)], this.points[i], this.points[mod(i + 1, n)]);
+            if (angle > Math.PI) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

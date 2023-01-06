@@ -1,14 +1,13 @@
-import { BufferGeometry, Float32BufferAttribute, Vector2, Vector3 } from "three"
+import { BufferGeometry, Float32BufferAttribute, Vector3 } from "three"
 import { Polygon } from "./polygon";
 import { Triangle } from "./triangle";
-import { mod } from "./utils";
+import { mod, compute_angle } from "./utils";
 
 class BarycentricGeometry extends BufferGeometry {
     parameters: any;
 
     constructor(polygon: Polygon, func: (u: number, v: number) => number, density = 4) {
         super();
-
         this.type = "BarycentricGeometry"
 
         this.parameters = {
@@ -24,20 +23,6 @@ class BarycentricGeometry extends BufferGeometry {
 
         this.setAttribute('position', new Float32BufferAttribute(positions, 3));
         // End of constructor
-
-
-        // Compute angle of edges p1-p2 and p2-p3
-        function compute_angle(p1: Vector3, p2: Vector3, p3: Vector3): number {
-            let v1 = new Vector3(p2.x - p1.x, p2.y - p1.y); // Use vector3 because of angleTo function
-            let v2 = new Vector3(p2.x - p3.x, p2.y - p3.y);
-
-            let angle = v1.angleTo(v2); // Always returns smaller angle
-            let orientation = v1.x * v2.y - v1.y * v2.x;
-            if (orientation > 0) {
-                angle = 2 * Math.PI - angle;
-            }
-            return angle;
-        }
 
         function isValidEar(triangle: Triangle, polygonPoints: Vector3[]): boolean {
             let angle = compute_angle(triangle.points[0], triangle.points[1], triangle.points[2]);
@@ -58,7 +43,6 @@ class BarycentricGeometry extends BufferGeometry {
             for (let i = 0; i < polygon.points.length; i++) {
                 points.push(polygon.points[i].clone());
             }
-
             let triangles: Triangle[] = [];
 
             while (points.length > 3) {

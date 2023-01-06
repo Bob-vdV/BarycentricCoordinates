@@ -4,7 +4,7 @@ function mod(a: number, b: number): number {
     return ((a % b) + b) % b;
 }
 
-function to2dVector(v: Vector3): Vector2 {
+function toVector2(v: Vector3): Vector2 {
     const p = new Vector2(v.x, v.y);
     return p;
 }
@@ -27,4 +27,18 @@ function signedTriangleArea(points: Vector2[]): number {
     return area;
 }
 
-export { mod, to2dVector, signedTriangleArea }
+// Compute angle between edges p1-p2 and p2-p3
+function compute_angle(p1: Vector3, p2: Vector3, p3: Vector3): number {
+    let v1 = new Vector3(p2.x - p1.x, p2.y - p1.y); // Use vector3 because of angleTo function
+    let v2 = new Vector3(p2.x - p3.x, p2.y - p3.y);
+
+    let angle = v1.angleTo(v2); // Always returns smaller angle
+    let orientation = v1.x * v2.y - v1.y * v2.x;
+    if (orientation > 0) {
+        angle = 2 * Math.PI - angle;
+    }
+    return angle;
+}
+
+
+export { mod, toVector2, signedTriangleArea, compute_angle }

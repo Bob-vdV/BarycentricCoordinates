@@ -30,7 +30,7 @@ class BarycentricGeometry extends BufferGeometry {
                 data.push(polygon.points[i].x);
                 data.push(polygon.points[i].y);
             }
-            const results!: number[] = Earcut.triangulate(data, [], 2); // Wrong type declared: https://github.com/three-types/three-ts-types/issues/268
+            const results: any[] = Earcut.triangulate(data, [], 2); // Wrong type declared: https://github.com/three-types/three-ts-types/issues/268
 
             const triangles: Triangle[] = [];
 

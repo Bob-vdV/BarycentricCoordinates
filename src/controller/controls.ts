@@ -35,7 +35,7 @@ class Controls {
             view.gui.parameters.pointIndex = index;
         }
 
-        function onDragEnd(event: any) {
+        function onDragEnd(_event: any) {
             interpolationUpdater.update();
         }
     }

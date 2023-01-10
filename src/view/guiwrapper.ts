@@ -24,8 +24,9 @@ class GuiWrapper {
 
         let initialIndex = 0;
         this.parameters = {
-            p: 1,
             c_function: "r^p",
+            p: 1,
+            custom_function: "2^r",
             colormap: "viridis",
             wireframe: false,
             density: model.interpolation.params.density,
@@ -35,21 +36,46 @@ class GuiWrapper {
             addPoint: function () { addPoint(); },
         }
 
+        const interpolationParams = scope.model.interpolation.params;
+
         initInterpolationFolder();
 
         initShadingFolder();
 
         initPolygonFolder();
 
-
         // End of constructor, functions are declared under here:
 
         function initInterpolationFolder() {
-            const interpolationParams = scope.model.interpolation.params;
-
             let interpolationFolder = scope.gui.addFolder("Interpolation");
 
-            interpolationFolder.add(scope.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)"]).onFinishChange(function (c_function) {
+            interpolationFolder.add(scope.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)", "custom"]).onFinishChange(function (c_function) {
+                for (let i = 0; i < interpolationFolder.__controllers.length; i++) {
+                    if (interpolationFolder.__controllers[i].property == "p") {
+                        let controllerStyle = interpolationFolder.__controllers[i].domElement.style;
+
+                        if (c_function == "r^p") {
+                            controllerStyle.pointerEvents = "";
+                            controllerStyle.opacity = "1";
+                        }
+                        else {
+                            controllerStyle.pointerEvents = "none";
+                            controllerStyle.opacity = "0.5";
+                        }
+                    } else if ((interpolationFolder.__controllers[i].property == "custom_function")){
+                        let controllerStyle = interpolationFolder.__controllers[i].domElement.style;
+
+                        if (c_function == "custom") {
+                            controllerStyle.pointerEvents = "";
+                            controllerStyle.opacity = "1";
+                        }
+                        else {
+                            controllerStyle.pointerEvents = "none";
+                            controllerStyle.opacity = "0.5";
+                        }
+                    }
+                }
+
                 switch (c_function) {
                     case "r^p":
                         interpolationParams["c_function"] = c_fun.powRP;
@@ -61,7 +87,10 @@ class GuiWrapper {
                         interpolationParams["c_function"] = c_fun.RDiv1R;
                         break;
                     case "r^2/(1+r^2)":
-                        interpolationParams["c_function"] = c_fun.sqRdiv1sqR;
+                        interpolationParams["c_function"] = c_fun.sqRDiv1SqR;
+                        break;
+                    case "custom":
+                        applyCustomFunction();
                         break;
                     default:
                         throw new Error("C function is not recognized");
@@ -73,11 +102,17 @@ class GuiWrapper {
                 interpolationParams["p"] = p;
                 interpolationUpdater.update();
             })
+
+            let custom_func_controller = interpolationFolder.add(scope.parameters, "custom_function").onFinishChange(function() {
+                applyCustomFunction();
+                interpolationUpdater.update();
+            })
+            // Disable by default (because r^p does not need it)
+            custom_func_controller.domElement.style.pointerEvents = "none";
+            custom_func_controller.domElement.style.opacity = "0.5";
         }
 
         function initShadingFolder() {
-            const interpolationParams = scope.model.interpolation.params;
-
             let viewFolder = scope.gui.addFolder("Shading");
 
             viewFolder.add(scope.parameters, "colormap", ["viridis", "gray", "hsv", "inferno", "jet", "terrain"]).onFinishChange(function (colormap) {
@@ -164,7 +199,7 @@ class GuiWrapper {
                 }
 
             } else {
-                alert("Cannot delete last three points for valid polygon");
+                alert("Cannot delete last three points");
             }
 
             updateDropdown(indexController, indexes);
@@ -184,6 +219,15 @@ class GuiWrapper {
             polygonUpdater.update();
             interpolationUpdater.update();
         }
+
+        function applyCustomFunction(){
+            try {
+                interpolationParams["c_function"] = c_fun.custom(scope.parameters["custom_function"]);
+            } catch (error) {
+                alert(error);
+            }
+        }
+
     }
 }
 

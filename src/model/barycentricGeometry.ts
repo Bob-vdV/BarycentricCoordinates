@@ -1,4 +1,4 @@
-import { BufferGeometry, Float32BufferAttribute} from "three"
+import { BufferGeometry, Float32BufferAttribute } from "three"
 import { Polygon } from "./polygon";
 import { Triangle } from "./triangle";
 import { Earcut } from "three/src/extras/Earcut";
@@ -25,8 +25,8 @@ class BarycentricGeometry extends BufferGeometry {
         // End of constructor
 
         function earcut(polygon: Polygon): Triangle[] {
-            const data:number[] = [];
-            for(let i=0;i<polygon.points.length;i++){
+            const data: number[] = [];
+            for (let i = 0; i < polygon.points.length; i++) {
                 data.push(polygon.points[i].x);
                 data.push(polygon.points[i].y);
             }
@@ -34,10 +34,10 @@ class BarycentricGeometry extends BufferGeometry {
 
             const triangles: Triangle[] = [];
 
-            for(let i=0;i<results.length;i += 3){
+            for (let i = 0; i < results.length; i += 3) {
                 let p0 = polygon.points[results[i]];
-                let p1 = polygon.points[results[i+1]];
-                let p2 = polygon.points[results[i+2]];
+                let p1 = polygon.points[results[i + 1]];
+                let p2 = polygon.points[results[i + 2]];
                 triangles.push(new Triangle([p0, p1, p2]));
             }
             return triangles

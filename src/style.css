@@ -18,8 +18,9 @@ body {
   position: absolute;
   left: 10px;
   top: 10px;
-  width: 16%;
   aspect-ratio: 1;
+  width: 16%;
+  min-width: 80px;
 }
 
 #polygon-warning {
@@ -29,5 +30,4 @@ body {
   left: 50%;
   transform: translate(-50%, 0);
   color: red;
-
 }

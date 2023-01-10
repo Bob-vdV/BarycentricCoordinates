@@ -30,8 +30,6 @@ class GuiWrapper {
             wireframe: false,
             density: model.interpolation.params.density,
             pointIndex: initialIndex,
-            x: this.model.polygon.points[initialIndex].x,
-            y: this.model.polygon.points[initialIndex].y,
             z: this.model.polygon.points[initialIndex].z,
             deletePoint: function () { deletePoint(); },
             addPoint: function () { addPoint(); },
@@ -41,7 +39,7 @@ class GuiWrapper {
 
         initShadingFolder();
 
-        polygonFolder();
+        initPolygonFolder();
 
 
         // End of constructor, functions are declared under here:
@@ -98,7 +96,7 @@ class GuiWrapper {
             })
         }
 
-        function polygonFolder() {
+        function initPolygonFolder() {
             const minCoordVal = -10;
             const maxCoordVal = 10;
             const step = 0.1;
@@ -111,24 +109,6 @@ class GuiWrapper {
                 .onChange(function (index) {
                     scope.parameters.pointIndex = index;
                     updateSliders();
-                });
-
-            polygonFolder.add(scope.parameters, "x").min(minCoordVal).max(maxCoordVal).step(step).listen()
-                .onChange(function (x) {
-                    model.polygon.points[scope.parameters.pointIndex].x = x;
-                    polygonUpdater.update();
-                })
-                .onFinishChange(function () {
-                    interpolationUpdater.update();
-                });
-
-            polygonFolder.add(scope.parameters, "y").min(minCoordVal).max(maxCoordVal).step(step).listen()
-                .onChange(function (y) {
-                    model.polygon.points[scope.parameters.pointIndex].y = y;
-                    polygonUpdater.update();
-                })
-                .onFinishChange(function () {
-                    interpolationUpdater.update();
                 });
 
             polygonFolder.add(scope.parameters, "z").min(minCoordVal).max(maxCoordVal).step(step).listen()
@@ -149,7 +129,6 @@ class GuiWrapper {
          * Based on following stackoverflow question:
          * https://stackoverflow.com/questions/18260307/dat-gui-update-the-dropdown-list-values-for-a-controller
          */
-
         function updateDropdown(target: any, list: number[]) {
             generateIndexes();
 
@@ -166,8 +145,6 @@ class GuiWrapper {
         }
 
         function updateSliders() {
-            scope.parameters.x = model.polygon.points[scope.parameters.pointIndex].x;
-            scope.parameters.y = model.polygon.points[scope.parameters.pointIndex].y;
             scope.parameters.z = model.polygon.points[scope.parameters.pointIndex].z;
         }
 

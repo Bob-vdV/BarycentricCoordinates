@@ -2,8 +2,6 @@ import { Model } from "../model/model"
 import * as THREE from "three";
 import { GuiWrapper } from "./guiwrapper"
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
-import { Vector3 } from "three";
-
 
 class MainView {
     readonly windowWidth: number;

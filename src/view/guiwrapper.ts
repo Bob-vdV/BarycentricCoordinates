@@ -1,8 +1,9 @@
 import { GUI } from "dat.gui";
 import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
-import { UpdateAction } from "../controller/actions/updateAction";
+import { InterpolationUpdateAction } from "../controller/actions/interpolationUpdateAction";
 import { Vector3 } from "three";
+import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
 
 class GuiWrapper {
     parameters: any;
@@ -15,8 +16,8 @@ class GuiWrapper {
 
         let scope = this;
 
-        const interpolationUpdater = new UpdateAction(model.interpolation, model.scene);
-        const polygonUpdater = new UpdateAction(model.polygon, this.model.scene);
+        const interpolationUpdater = new InterpolationUpdateAction(model.interpolation, model.scene);
+        const polygonUpdater = new PolygonUpdateAction(model.polygon, this.model.scene);
 
         let indexController: any;
         const indexes: number[] = []; //Simple list of [0..lastIndex]
@@ -116,7 +117,6 @@ class GuiWrapper {
                 .onChange(function (x) {
                     model.polygon.points[scope.parameters.pointIndex].x = x;
                     polygonUpdater.update();
-                    checkConvex();
                 })
                 .onFinishChange(function () {
                     interpolationUpdater.update();
@@ -126,7 +126,6 @@ class GuiWrapper {
                 .onChange(function (y) {
                     model.polygon.points[scope.parameters.pointIndex].y = y;
                     polygonUpdater.update();
-                    checkConvex();
                 })
                 .onFinishChange(function () {
                     interpolationUpdater.update();
@@ -136,7 +135,6 @@ class GuiWrapper {
                 .onChange(function (z) {
                     model.polygon.points[scope.parameters.pointIndex].z = z;
                     polygonUpdater.update();
-                    checkConvex();
                 })
                 .onFinishChange(function () {
                     interpolationUpdater.update();
@@ -145,8 +143,6 @@ class GuiWrapper {
             polygonFolder.add(scope.parameters, "deletePoint").name("Delete point");
 
             polygonFolder.add(scope.parameters, "addPoint").name("add new point");
-
-            addWarningHTML();
         }
 
         /**
@@ -211,29 +207,6 @@ class GuiWrapper {
             polygonUpdater.update();
             interpolationUpdater.update();
         }
-
-        function checkConvex() {
-            if (!model.polygon.isConvex()) {
-                document.getElementById("polygon-warning")!.style.visibility = "visible"
-            } else {
-                document.getElementById("polygon-warning")!.style.visibility = "hidden"
-            }
-        }
-
-        function addWarningHTML() {
-            // Add html element for Warning if polygon is not convex.
-            let warning = document.createElement('div');
-            warning.id = "polygon-warning";
-            warning.textContent = "Warning: Polygon is not convex";
-            warning.style.position = "absolute";
-            warning.style.top = "10px";
-            warning.style.left = "50%";
-            warning.style.transform = "translate(-50%, 0)"
-            warning.style.color = "red";
-            warning.style.visibility = "hidden";
-            document.body.appendChild(warning);
-        }
-
     }
 }
 

@@ -1,7 +1,7 @@
-import { BufferGeometry, Float32BufferAttribute, Vector3 } from "three"
+import { BufferGeometry, Float32BufferAttribute} from "three"
 import { Polygon } from "./polygon";
 import { Triangle } from "./triangle";
-import { mod, compute_angle } from "./utils";
+import { Earcut } from "three/src/extras/Earcut";
 
 class BarycentricGeometry extends BufferGeometry {
     parameters: any;
@@ -14,7 +14,7 @@ class BarycentricGeometry extends BufferGeometry {
             func: func,
         }
 
-        let mainTriangles = earclip(polygon);
+        let mainTriangles = earcut(polygon);
 
         let positions: number[] = [];
         for (let i = 0; i < mainTriangles.length; i++) {
@@ -24,43 +24,23 @@ class BarycentricGeometry extends BufferGeometry {
         this.setAttribute('position', new Float32BufferAttribute(positions, 3));
         // End of constructor
 
-        function isValidEar(triangle: Triangle, polygonPoints: Vector3[]): boolean {
-            let angle = compute_angle(triangle.points[0], triangle.points[1], triangle.points[2]);
-            if (angle > Math.PI) {
-                return false;
+        function earcut(polygon: Polygon): Triangle[] {
+            const data:number[] = [];
+            for(let i=0;i<polygon.points.length;i++){
+                data.push(polygon.points[i].x);
+                data.push(polygon.points[i].y);
             }
+            const results: number[] = Earcut.triangulate(data, [], 2);
 
-            for (let j = 0; j < polygonPoints.length; j++) {
-                if (triangle.contains(polygonPoints[j])) {
-                    return false;
-                }
+            const triangles: Triangle[] = [];
+
+            for(let i=0;i<results.length;i += 3){
+                let p0 = polygon.points[results[i]];
+                let p1 = polygon.points[results[i+1]];
+                let p2 = polygon.points[results[i+2]];
+                triangles.push(new Triangle([p0, p1, p2]));
             }
-            return true;
-        }
-
-        function earclip(polygon: Polygon): Triangle[] {
-            let points: Vector3[] = [];
-            for (let i = 0; i < polygon.points.length; i++) {
-                points.push(polygon.points[i].clone());
-            }
-            let triangles: Triangle[] = [];
-
-            while (points.length > 3) {
-                for (let i = 0; i < points.length; i++) {
-                    let last = points[mod(i - 1, points.length)];
-                    let curr = points[i];
-                    let next = points[mod(i + 1, points.length)];
-                    let triangle = new Triangle([last, curr, next]);
-
-                    if (isValidEar(triangle, points)) {
-                        triangles.push(triangle);
-                        points.splice(i, 1);
-                        break;
-                    }
-                }
-            }
-            triangles.push(new Triangle([points[0], points[1], points[2]]));
-            return triangles;
+            return triangles
         }
     }
 }

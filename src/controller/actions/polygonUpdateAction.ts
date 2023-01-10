@@ -1,12 +1,10 @@
-import { Interpolation } from "../../model/interpolation"
 import { Polygon } from "../../model/polygon";
 
-
-class UpdateAction {
-    figure: Interpolation | Polygon;
+class PolygonUpdateAction {
+    figure: Polygon;
     scene: THREE.Scene;
 
-    constructor(figure: Interpolation | Polygon, scene: THREE.Scene) {
+    constructor(figure: Polygon, scene: THREE.Scene) {
         this.figure = figure;
         this.scene = scene;
     }
@@ -21,8 +19,17 @@ class UpdateAction {
             throw new Error("Object not defined!");
         }
         this.scene.add(this.figure.mesh);
+
+        this.checkConvex();
+    }
+
+    checkConvex() {
+        if (!this.figure.isConvex()) {
+            document.getElementById("polygon-warning")!.style.visibility = "visible"
+        } else {
+            document.getElementById("polygon-warning")!.style.visibility = "hidden"
+        }
     }
 }
 
-
-export { UpdateAction }
+export { PolygonUpdateAction }

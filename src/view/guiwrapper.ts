@@ -1,8 +1,9 @@
 import { GUI } from "dat.gui";
 import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
-import { UpdateAction } from "../controller/actions/updateAction";
+import { InterpolationUpdateAction } from "../controller/actions/interpolationUpdateAction";
 import { Vector3 } from "three";
+import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
 
 class GuiWrapper {
     parameters: any;
@@ -15,8 +16,8 @@ class GuiWrapper {
 
         let scope = this;
 
-        const interpolationUpdater = new UpdateAction(model.interpolation, model.scene);
-        const polygonUpdater = new UpdateAction(model.polygon, this.model.scene);
+        const interpolationUpdater = new InterpolationUpdateAction(model.interpolation, model.scene);
+        const polygonUpdater = new PolygonUpdateAction(model.polygon, this.model.scene);
 
         let indexController: any;
         const indexes: number[] = []; //Simple list of [0..lastIndex]
@@ -27,10 +28,8 @@ class GuiWrapper {
             c_function: "r^p",
             colormap: "viridis",
             wireframe: false,
-            slices: model.interpolation.params.slices,
+            density: model.interpolation.params.density,
             pointIndex: initialIndex,
-            x: this.model.polygon.points[initialIndex].x,
-            y: this.model.polygon.points[initialIndex].y,
             z: this.model.polygon.points[initialIndex].z,
             deletePoint: function () { deletePoint(); },
             addPoint: function () { addPoint(); },
@@ -40,7 +39,7 @@ class GuiWrapper {
 
         initShadingFolder();
 
-        polygonFolder();
+        initPolygonFolder();
 
 
         // End of constructor, functions are declared under here:
@@ -70,7 +69,7 @@ class GuiWrapper {
                 interpolationUpdater.update();
             });
 
-            interpolationFolder.add(scope.parameters, "p").min(-2).max(2).step(0.5).onFinishChange( function (p) {
+            interpolationFolder.add(scope.parameters, "p").min(-2).max(2).step(0.5).onFinishChange(function (p) {
                 interpolationParams["p"] = p;
                 interpolationUpdater.update();
             })
@@ -91,13 +90,13 @@ class GuiWrapper {
                 interpolationUpdater.update();
             })
 
-            viewFolder.add(scope.parameters, "slices").min(10).max(1000).step(10).onFinishChange(function (slices) {
-                interpolationParams["slices"] = slices;
+            viewFolder.add(scope.parameters, "density").min(1).max(8).step(1).onFinishChange(function (density) {
+                interpolationParams["density"] = density;
                 interpolationUpdater.update();
             })
         }
 
-        function polygonFolder() {
+        function initPolygonFolder() {
             const minCoordVal = -10;
             const maxCoordVal = 10;
             const step = 0.1;
@@ -106,39 +105,20 @@ class GuiWrapper {
 
             let polygonFolder = scope.gui.addFolder("Polygon");
 
-            indexController = polygonFolder.add(scope.parameters, "pointIndex", indexes)
-            .onChange(function (index) {
-                scope.parameters.pointIndex = index;
-                updateSliders();
-            });
-
-
-            polygonFolder.add(scope.parameters, "x").min(minCoordVal).max(maxCoordVal).step(step).listen()
-            .onChange(function (x) {
-                model.polygon.points[scope.parameters.pointIndex].x = x;
-                polygonUpdater.update();
-            })
-            .onFinishChange( function () {
-                interpolationUpdater.update();
-            });
-
-            polygonFolder.add(scope.parameters, "y").min(minCoordVal).max(maxCoordVal).step(step).listen()
-            .onChange(function (y) {
-                model.polygon.points[scope.parameters.pointIndex].y = y;
-                polygonUpdater.update();
-            })            
-            .onFinishChange( function () {
-                interpolationUpdater.update();
-            });
+            indexController = polygonFolder.add(scope.parameters, "pointIndex", indexes).listen()
+                .onChange(function (index) {
+                    scope.parameters.pointIndex = index;
+                    updateSliders();
+                });
 
             polygonFolder.add(scope.parameters, "z").min(minCoordVal).max(maxCoordVal).step(step).listen()
-            .onChange(function (z) {
-                model.polygon.points[scope.parameters.pointIndex].z = z;
-                polygonUpdater.update();
-            })            
-            .onFinishChange( function () {
-                interpolationUpdater.update();
-            });
+                .onChange(function (z) {
+                    model.polygon.points[scope.parameters.pointIndex].z = z;
+                    polygonUpdater.update();
+                })
+                .onFinishChange(function () {
+                    interpolationUpdater.update();
+                });
 
             polygonFolder.add(scope.parameters, "deletePoint").name("Delete point");
 
@@ -149,7 +129,6 @@ class GuiWrapper {
          * Based on following stackoverflow question:
          * https://stackoverflow.com/questions/18260307/dat-gui-update-the-dropdown-list-values-for-a-controller
          */
-
         function updateDropdown(target: any, list: number[]) {
             generateIndexes();
 
@@ -166,8 +145,6 @@ class GuiWrapper {
         }
 
         function updateSliders() {
-            scope.parameters.x = model.polygon.points[scope.parameters.pointIndex].x;
-            scope.parameters.y = model.polygon.points[scope.parameters.pointIndex].y;
             scope.parameters.z = model.polygon.points[scope.parameters.pointIndex].z;
         }
 
@@ -203,7 +180,7 @@ class GuiWrapper {
 
             updateDropdown(indexController, indexes);
             updateSliders();
-    
+
             polygonUpdater.update();
             interpolationUpdater.update();
         }

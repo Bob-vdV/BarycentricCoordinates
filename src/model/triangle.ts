@@ -14,16 +14,6 @@ class Triangle {
         this.area = 0.5 * (-pts[1].y * pts[2].x + pts[0].y * (-pts[1].x + pts[2].x) + pts[0].x * (pts[1].y - pts[2].y) + pts[1].x + pts[2].y);
     }
 
-    // https://stackoverflow.com/a/14382692
-    contains(p: Vector3): boolean {
-        let pts = this.points;
-
-        let s = 1 / (2 * this.area) * (pts[0].y * pts[2].x - pts[0].x * pts[2].y + (pts[2].y - pts[0].y) * p.x + (pts[0].x - pts[2].x) * p.y);
-        let t = 1 / (2 * this.area) * (pts[0].x * pts[1].y - pts[0].y * pts[1].x + (pts[0].y - pts[1].y) * p.x + (pts[1].x - pts[0].x) * p.y);
-
-        return s > 0 && t > 0 && 1 - s - t > 0;
-    }
-
     subTriangles(depth: number, array: number[], func: (x: number, y: number) => number) {
         let pts = this.points;
 

@@ -33,6 +33,7 @@ class Controls {
         function onDragStart(event: any) {
             const index = Number(event.object.name);
             view.gui.parameters.pointIndex = index;
+            view.gui.parameters.z = polygon.points[index].z;
         }
 
         function onDragEnd(_event: any) {

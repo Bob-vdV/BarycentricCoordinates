@@ -5,3 +5,19 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+#app {
+  z-index: 0;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+#minimap {
+  z-index: 1;
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  width: 16%;
+  aspect-ratio: 1;
+}

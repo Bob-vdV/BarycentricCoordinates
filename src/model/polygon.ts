@@ -44,9 +44,17 @@ class Polygon {
         const geometry = new LineGeometry();
         geometry.setPositions(positions);
         const lines = new Line2(geometry, this.material);
-        lines.computeLineDistances();
         this.mesh.add(lines);
 
+        const minimapLines = new Line2(geometry, new LineMaterial({
+            color: this.color,
+            linewidth: 0.01,
+            depthTest: false,
+            depthWrite: false,
+        }))
+        minimapLines.layers.set(1);
+        minimapLines.renderOrder = 998;
+        this.mesh.add(minimapLines);
 
         // Add 'base' line segments at z=0 if the edges are not already at 0
         let basePositions = [];
@@ -75,9 +83,33 @@ class Polygon {
         }
     }
 
+    generateCorners() {
+        this.corners.clear();
+        let material = new THREE.MeshBasicMaterial({
+            color: "red",
+            //depthTest: false,
+            //depthWrite: false,
+        })
+
+        //TODO: replace with simple sprite
+        for(let i=0;i<this.points.length;i++){
+            let circleGeometry = new THREE.CircleGeometry(0.4, 20);
+            let circlemesh = new THREE.Mesh(circleGeometry, material);
+
+            circlemesh.position.copy(this.points[i]).setZ(11);
+            circlemesh.layers.set(1);
+            //circlemesh.renderOrder = 999;
+            circlemesh.name = i.toString();
+            this.corners.add(circlemesh);
+        }
+
+        this.mesh.add(this.corners);
+    }
+
     generateMesh() {
         this.mesh.clear();
         this.generateLines();
+        this.generateCorners();
         this.mesh.name = this.name;
     }
 

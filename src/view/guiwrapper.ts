@@ -3,7 +3,6 @@ import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
 import { UpdateAction } from "../controller/actions/updateAction";
 import { Vector3 } from "three";
-import { Polygon } from "../model/polygon";
 
 class GuiWrapper {
     parameters: any;
@@ -107,12 +106,11 @@ class GuiWrapper {
 
             let polygonFolder = scope.gui.addFolder("Polygon");
 
-            indexController = polygonFolder.add(scope.parameters, "pointIndex", indexes)
+            indexController = polygonFolder.add(scope.parameters, "pointIndex", indexes).listen()
                 .onChange(function (index) {
                     scope.parameters.pointIndex = index;
                     updateSliders();
                 });
-
 
             polygonFolder.add(scope.parameters, "x").min(minCoordVal).max(maxCoordVal).step(step).listen()
                 .onChange(function (x) {

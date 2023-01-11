@@ -14,13 +14,8 @@ class Polygon {
     lines: THREE.Mesh | null = null;
     corners = new THREE.Group();
 
-    constructor(numPoints: number, radius: number, z = 0) {
+    constructor() {
         this.points = [];
-        for (let i = 0; i < numPoints; i++) {
-            let x = radius * Math.cos(i * 2 * Math.PI / numPoints);
-            let y = radius * Math.sin(i * 2 * Math.PI / numPoints);
-            this.points.push(new THREE.Vector3(x, y, z));
-        }
 
         this.material = new LineMaterial({
             color: this.color,
@@ -87,8 +82,6 @@ class Polygon {
         this.corners.clear();
         let material = new THREE.MeshBasicMaterial({
             color: "red",
-            //depthTest: false,
-            //depthWrite: false,
         })
 
         //TODO: replace with simple sprite
@@ -98,7 +91,6 @@ class Polygon {
 
             circlemesh.position.copy(this.points[i]).setZ(11);
             circlemesh.layers.set(1);
-            //circlemesh.renderOrder = 999;
             circlemesh.name = i.toString();
             this.corners.add(circlemesh);
         }

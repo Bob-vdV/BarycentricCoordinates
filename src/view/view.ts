@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { GuiWrapper } from "./guiwrapper"
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
 
-class MainView {
+class View {
     readonly windowWidth: number;
     readonly windowHeight: number;
 
@@ -29,14 +29,16 @@ class MainView {
         this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov / 2));
 
         this.renderer = new THREE.WebGLRenderer({
-            canvas: document.getElementById("app") as HTMLCanvasElement
+            canvas: document.getElementById("app") as HTMLCanvasElement,
+            antialias: true
         });
         this.renderer.setClearColor(0x222222, 1); // Sets background color
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
         this.mapRenderer = new THREE.WebGLRenderer({
-            canvas: document.getElementById("minimap") as HTMLCanvasElement
+            canvas: document.getElementById("minimap") as HTMLCanvasElement,
+            antialias: true
         });
         this.mapRenderer.setClearColor(0x00000, 1);
         document.body.appendChild(this.mapRenderer.domElement);
@@ -102,4 +104,4 @@ class MainView {
     }
 }
 
-export { MainView }
+export { View }

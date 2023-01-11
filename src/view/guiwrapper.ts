@@ -4,6 +4,7 @@ import * as c_fun from "../model/cFunctions";
 import { InterpolationUpdateAction } from "../controller/actions/interpolationUpdateAction";
 import { Vector3 } from "three";
 import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
+import * as presets from "../controller/presets";
 
 class GuiWrapper {
     parameters: any;
@@ -34,18 +35,19 @@ class GuiWrapper {
             z: this.model.polygon.points[initialIndex].z,
             deletePoint: function () { deletePoint(); },
             addPoint: function () { addPoint(); },
-        }
+            numPoints: 6,
+            preset: "regular polygon",
+            applyPreset: applyPreset,
+        };
 
         const interpolationParams = scope.model.interpolation.params;
 
         initInterpolationFolder();
-
         initShadingFolder();
-
         initPolygonFolder();
+        initPresetFolder();
 
         // End of constructor, functions are declared under here:
-
         function initInterpolationFolder() {
             let interpolationFolder = scope.gui.addFolder("Interpolation");
 
@@ -62,7 +64,7 @@ class GuiWrapper {
                             controllerStyle.pointerEvents = "none";
                             controllerStyle.opacity = "0.5";
                         }
-                    } else if ((interpolationFolder.__controllers[i].property == "custom_function")){
+                    } else if ((interpolationFolder.__controllers[i].property == "custom_function")) {
                         let controllerStyle = interpolationFolder.__controllers[i].domElement.style;
 
                         if (c_function == "custom") {
@@ -103,7 +105,7 @@ class GuiWrapper {
                 interpolationUpdater.update();
             })
 
-            let custom_func_controller = interpolationFolder.add(scope.parameters, "custom_function").onFinishChange(function() {
+            let custom_func_controller = interpolationFolder.add(scope.parameters, "custom_function").onFinishChange(function () {
                 applyCustomFunction();
                 interpolationUpdater.update();
             })
@@ -160,6 +162,16 @@ class GuiWrapper {
             polygonFolder.add(scope.parameters, "addPoint").name("add new point");
         }
 
+        function initPresetFolder() {
+            const presetFolder = scope.gui.addFolder("Presets");
+
+            presetFolder.add(scope.parameters, "numPoints").name("Number of points").min(3).max(25).step(1);
+
+            presetFolder.add(scope.parameters, "preset", ["regular polygon", "wave", "hyperparaboloid", "nonConvex"]).name("Preset");
+
+            presetFolder.add(scope.parameters, "applyPreset").name("Apply preset");
+        }
+
         /**
          * Based on following stackoverflow question:
          * https://stackoverflow.com/questions/18260307/dat-gui-update-the-dropdown-list-values-for-a-controller
@@ -197,7 +209,6 @@ class GuiWrapper {
                 if (scope.parameters.pointIndex != 0) {
                     scope.parameters.pointIndex -= 1;
                 }
-
             } else {
                 alert("Cannot delete last three points");
             }
@@ -220,7 +231,7 @@ class GuiWrapper {
             interpolationUpdater.update();
         }
 
-        function applyCustomFunction(){
+        function applyCustomFunction() {
             try {
                 interpolationParams["c_function"] = c_fun.custom(scope.parameters["custom_function"]);
             } catch (error) {
@@ -228,6 +239,11 @@ class GuiWrapper {
             }
         }
 
+        function applyPreset(){
+            presets.applyPreset(model.polygon, scope.parameters.preset, scope.parameters.numPoints);
+            polygonUpdater.update();
+            interpolationUpdater.update();
+        }
     }
 }
 

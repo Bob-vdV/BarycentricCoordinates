@@ -78,8 +78,13 @@ class Interpolation {
 
         let wrapperFunction = (u: number, v: number): number => {
             u += Eps;
-            v += Eps;
-            return this.interpolate(u, v);
+
+            let result = this.interpolate(u, v);
+            if (isNaN(result)){ // (u,v) probably on edge, try to move slightly to avoid NaN
+                u -= 2*Eps;
+                result = this.interpolate(u, v);
+            }
+            return result;
         };
 
         const geometry = new BarycentricGeometry(this.polygon, wrapperFunction, this.params.density);
@@ -113,7 +118,9 @@ class Interpolation {
             let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin);
 
             if (isNaN(value)) { // Occurs when point is on an edge
-                console.error("value at ", i, " is NaN");
+                const x = positions.array[i*numDims];
+                const y = positions.array[i*numDims + 1]
+                console.error("z value at (", x,", ",y, ") is NaN");
                 continue;
             }
             let color: number[] = evaluate_cmap(value / zRange, this.params.colormap, false);

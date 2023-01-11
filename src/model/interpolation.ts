@@ -74,16 +74,9 @@ class Interpolation {
 
     generateMesh() {
         this.material.wireframe = this.params.wireframe;
-        const Eps = 0.001 // Offset to prevent division by 0 on the polygon's edges
 
         let wrapperFunction = (u: number, v: number): number => {
-            u += Eps;
-
             let result = this.interpolate(u, v);
-            if (isNaN(result)){ // (u,v) probably on edge, try to move slightly to avoid NaN
-                u -= 2*Eps;
-                result = this.interpolate(u, v);
-            }
             return result;
         };
 

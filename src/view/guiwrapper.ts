@@ -1,16 +1,18 @@
-import { GUI } from "dat.gui";
+import { GUI, GUIController } from "dat.gui";
 import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
 import { InterpolationUpdateAction } from "../controller/actions/interpolationUpdateAction";
 import { Vector3 } from "three";
 import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
+import * as presets from "../controller/presets";
+import { Clipper } from "./clipper";
 
 class GuiWrapper {
     parameters: any;
     model: Model;
     gui: GUI;
 
-    constructor(model: Model) {
+    constructor(model: Model, clipper: Clipper) {
         this.gui = new GUI();
         this.model = model;
 
@@ -30,48 +32,43 @@ class GuiWrapper {
             colormap: "viridis",
             wireframe: false,
             density: model.interpolation.params.density,
+            clipping: false,
+            clipHeight: 0.5,
             pointIndex: initialIndex,
             z: this.model.polygon.points[initialIndex].z,
             deletePoint: function () { deletePoint(); },
             addPoint: function () { addPoint(); },
-        }
+            numPoints: 6,
+            preset: "regular polygon",
+            applyPreset: applyPreset,
+        };
 
         const interpolationParams = scope.model.interpolation.params;
 
         initInterpolationFolder();
-
         initShadingFolder();
-
         initPolygonFolder();
+        initPresetFolder();
 
         // End of constructor, functions are declared under here:
-
         function initInterpolationFolder() {
             let interpolationFolder = scope.gui.addFolder("Interpolation");
 
-            interpolationFolder.add(scope.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)", "custom"]).onFinishChange(function (c_function) {
+            interpolationFolder.add(scope.parameters, "c_function", ["r^p", "log(1+r)", "r/(1+r)", "r^2/(1+r^2)", "custom"]).onFinishChange(function (c_function: string) {
                 for (let i = 0; i < interpolationFolder.__controllers.length; i++) {
                     if (interpolationFolder.__controllers[i].property == "p") {
-                        let controllerStyle = interpolationFolder.__controllers[i].domElement.style;
-
                         if (c_function == "r^p") {
-                            controllerStyle.pointerEvents = "";
-                            controllerStyle.opacity = "1";
+                            toggleController(interpolationFolder.__controllers[i], true);
                         }
                         else {
-                            controllerStyle.pointerEvents = "none";
-                            controllerStyle.opacity = "0.5";
+                            toggleController(interpolationFolder.__controllers[i], false);
                         }
-                    } else if ((interpolationFolder.__controllers[i].property == "custom_function")){
-                        let controllerStyle = interpolationFolder.__controllers[i].domElement.style;
-
+                    } else if ((interpolationFolder.__controllers[i].property == "custom_function")) {
                         if (c_function == "custom") {
-                            controllerStyle.pointerEvents = "";
-                            controllerStyle.opacity = "1";
+                            toggleController(interpolationFolder.__controllers[i], true);
                         }
                         else {
-                            controllerStyle.pointerEvents = "none";
-                            controllerStyle.opacity = "0.5";
+                            toggleController(interpolationFolder.__controllers[i], false);
                         }
                     }
                 }
@@ -98,37 +95,46 @@ class GuiWrapper {
                 interpolationUpdater.update();
             });
 
-            interpolationFolder.add(scope.parameters, "p").min(-2).max(2).step(0.5).onFinishChange(function (p) {
+            interpolationFolder.add(scope.parameters, "p").min(-2).max(2).step(0.5).onFinishChange(function (p: number) {
                 interpolationParams["p"] = p;
                 interpolationUpdater.update();
-            })
+            });
 
-            let custom_func_controller = interpolationFolder.add(scope.parameters, "custom_function").onFinishChange(function() {
+            let customFuncController = interpolationFolder.add(scope.parameters, "custom_function").onFinishChange(function () {
                 applyCustomFunction();
                 interpolationUpdater.update();
-            })
+            });
             // Disable by default (because r^p does not need it)
-            custom_func_controller.domElement.style.pointerEvents = "none";
-            custom_func_controller.domElement.style.opacity = "0.5";
+            toggleController(customFuncController, false);
         }
 
         function initShadingFolder() {
             let viewFolder = scope.gui.addFolder("Shading");
 
-            viewFolder.add(scope.parameters, "colormap", ["viridis", "gray", "hsv", "inferno", "jet", "terrain"]).onFinishChange(function (colormap) {
+            viewFolder.add(scope.parameters, "colormap", ["viridis", "gray", "hsv", "inferno", "jet", "terrain"]).onFinishChange(function (colormap: string) {
                 interpolationParams["colormap"] = colormap;
                 interpolationUpdater.update();
             });
 
-            viewFolder.add(scope.parameters, "wireframe").onFinishChange(function (wireframe) {
+            viewFolder.add(scope.parameters, "wireframe").onFinishChange(function (wireframe: boolean) {
                 interpolationParams["wireframe"] = wireframe;
                 interpolationUpdater.update();
-            })
+            });
 
-            viewFolder.add(scope.parameters, "density").min(1).max(8).step(1).onFinishChange(function (density) {
+            viewFolder.add(scope.parameters, "density").min(1).max(8).step(1).onFinishChange(function (density: number) {
                 interpolationParams["density"] = density;
                 interpolationUpdater.update();
+            });
+
+            viewFolder.add(scope.parameters, "clipping").onChange(function (clippingEnabled: boolean) {
+                toggleController(sliceController, clippingEnabled);
+                clipper.toggleClipping(clippingEnabled);
+            });
+
+            let sliceController = viewFolder.add(scope.parameters, "clipHeight").min(-5).max(5).step(0.01).onChange(function (clipHeight: number) {
+                clipper.setHeight(clipHeight);
             })
+            toggleController(sliceController, false);
         }
 
         function initPolygonFolder() {
@@ -141,13 +147,13 @@ class GuiWrapper {
             let polygonFolder = scope.gui.addFolder("Polygon");
 
             indexController = polygonFolder.add(scope.parameters, "pointIndex", indexes).listen()
-                .onChange(function (index) {
+                .onChange(function (index: number) {
                     scope.parameters.pointIndex = index;
                     updateSliders();
                 });
 
             polygonFolder.add(scope.parameters, "z").min(minCoordVal).max(maxCoordVal).step(step).listen()
-                .onChange(function (z) {
+                .onChange(function (z: number) {
                     model.polygon.points[scope.parameters.pointIndex].z = z;
                     polygonUpdater.update();
                 })
@@ -158,6 +164,16 @@ class GuiWrapper {
             polygonFolder.add(scope.parameters, "deletePoint").name("Delete point");
 
             polygonFolder.add(scope.parameters, "addPoint").name("add new point");
+        }
+
+        function initPresetFolder() {
+            const presetFolder = scope.gui.addFolder("Presets");
+
+            presetFolder.add(scope.parameters, "numPoints").name("Number of points").min(3).max(25).step(1);
+
+            presetFolder.add(scope.parameters, "preset", ["regular polygon", "wave", "hyperparaboloid", "nonConvex"]).name("Preset");
+
+            presetFolder.add(scope.parameters, "applyPreset").name("Apply preset");
         }
 
         /**
@@ -191,13 +207,22 @@ class GuiWrapper {
             }
         }
 
+        function toggleController(controller: GUIController, enabled: boolean) {
+            if (enabled) {
+                controller.domElement.style.pointerEvents = "";
+                controller.domElement.style.opacity = "1";
+            } else {
+                controller.domElement.style.pointerEvents = "none";
+                controller.domElement.style.opacity = "0.5";
+            }
+        }
+
         function deletePoint() {
             if (model.polygon.points.length > 3) { // Should be valid polygon
                 model.polygon.points.splice(scope.parameters.pointIndex, 1);
                 if (scope.parameters.pointIndex != 0) {
                     scope.parameters.pointIndex -= 1;
                 }
-
             } else {
                 alert("Cannot delete last three points");
             }
@@ -220,7 +245,7 @@ class GuiWrapper {
             interpolationUpdater.update();
         }
 
-        function applyCustomFunction(){
+        function applyCustomFunction() {
             try {
                 interpolationParams["c_function"] = c_fun.custom(scope.parameters["custom_function"]);
             } catch (error) {
@@ -228,6 +253,11 @@ class GuiWrapper {
             }
         }
 
+        function applyPreset() {
+            presets.applyPreset(model.polygon, scope.parameters.preset, scope.parameters.numPoints);
+            polygonUpdater.update();
+            interpolationUpdater.update();
+        }
     }
 }
 

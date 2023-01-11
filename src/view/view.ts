@@ -1,9 +1,9 @@
 import { Model } from "../model/model"
 import * as THREE from "three";
 import { GuiWrapper } from "./guiwrapper"
-import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
+import { Clipper } from "./clipper";
 
-class MainView {
+class View {
     readonly windowWidth: number;
     readonly windowHeight: number;
 
@@ -13,8 +13,7 @@ class MainView {
     mapCamera: THREE.OrthographicCamera;
     tanFOV: number;
     renderer: THREE.WebGLRenderer;
-    mapRenderer: THREE.WebGLRenderer
-    labelRenderer: CSS2DRenderer;
+    mapRenderer: THREE.WebGLRenderer;
 
     gui: GuiWrapper;
 
@@ -29,14 +28,16 @@ class MainView {
         this.tanFOV = Math.tan(((Math.PI / 180) * this.camera.fov / 2));
 
         this.renderer = new THREE.WebGLRenderer({
-            canvas: document.getElementById("app") as HTMLCanvasElement
+            canvas: document.getElementById("app") as HTMLCanvasElement,
+            antialias: true
         });
         this.renderer.setClearColor(0x222222, 1); // Sets background color
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
         this.mapRenderer = new THREE.WebGLRenderer({
-            canvas: document.getElementById("minimap") as HTMLCanvasElement
+            canvas: document.getElementById("minimap") as HTMLCanvasElement,
+            antialias: true
         });
         this.mapRenderer.setClearColor(0x00000, 1);
         document.body.appendChild(this.mapRenderer.domElement);
@@ -56,12 +57,6 @@ class MainView {
 
         this.model.scene.add(this.mapCamera);
 
-        this.labelRenderer = new CSS2DRenderer(); //TODO: decide if we keep this or not
-        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
-        this.labelRenderer.domElement.style.position = 'absolute';
-        this.labelRenderer.domElement.style.top = '0px';
-        document.body.appendChild(this.labelRenderer.domElement);
-
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(this.windowWidth, this.windowHeight);
 
@@ -73,7 +68,8 @@ class MainView {
             this.onWindowResize();
         }, false);
 
-        this.gui = new GuiWrapper(model);
+        const clipper = new Clipper(this.renderer, model.interpolation);
+        this.gui = new GuiWrapper(model, clipper);
     }
 
 
@@ -92,14 +88,12 @@ class MainView {
         this.camera.lookAt(this.model.scene.position);
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     update() {
         this.renderer.render(this.model.scene, this.camera);
         this.mapRenderer.render(this.model.scene, this.mapCamera);
-        this.labelRenderer.render(this.model.scene, this.camera);
     }
 }
 
-export { MainView }
+export { View }

@@ -1,6 +1,6 @@
 import { MapControls } from "three/examples/jsm/controls/OrbitControls"
 import { Polygon } from "../model/polygon";
-import { MainView } from "../view/mainView";
+import { View } from "../view/view";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { InterpolationUpdateAction } from "./actions/interpolationUpdateAction";
 import { Interpolation } from "../model/interpolation";
@@ -10,8 +10,8 @@ class Controls {
     mainControls: MapControls; // 3D view
     mapControls: DragControls; // 2D view (minimap)
 
-    constructor(polygon: Polygon, interpolation: Interpolation, view: MainView, scene: THREE.Scene) {
-        this.mainControls = new MapControls(view.camera, view.labelRenderer.domElement);
+    constructor(polygon: Polygon, interpolation: Interpolation, view: View, scene: THREE.Scene) {
+        this.mainControls = new MapControls(view.camera, view.renderer.domElement);
         this.mapControls = new DragControls([polygon.corners], view.mapCamera, view.mapRenderer.domElement);
         this.mapControls.getRaycaster().layers.set(1);
 

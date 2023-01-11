@@ -1,18 +1,16 @@
 import * as THREE from 'three';
 import { Polygon } from './polygon';
 import { Interpolation } from './interpolation';
-import { MainView } from '../view/mainView';
+import { View } from '../view/view';
 import { Controls } from '../controller/controls';
+import { regularPolygon } from '../controller/presets';
 
 /**
  * Main model that is run
- * 
- * 
  */
-
 class Model {
     scene: THREE.Scene;
-    view: MainView;
+    view: View;
     controls: Controls;
     polygon: Polygon;
     interpolation: Interpolation;
@@ -26,8 +24,8 @@ class Model {
         /**
          * Setup objects
          */
-        this.polygon = new Polygon(6, 3);
-        this.polygon.points[0].z = 1;
+        this.polygon = new Polygon();
+        regularPolygon(this.polygon, 6);
 
         this.polygon.generateMesh();
         this.scene.add(this.polygon.mesh);
@@ -40,7 +38,7 @@ class Model {
         /**
          * Setup view
          */
-        this.view = new MainView(this);
+        this.view = new View(this);
 
         /**
          * Setup controls

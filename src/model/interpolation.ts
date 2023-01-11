@@ -74,12 +74,10 @@ class Interpolation {
 
     generateMesh() {
         this.material.wireframe = this.params.wireframe;
-        const Eps = 0.001 // Offset to prevent division by 0 on the polygon's edges
 
         let wrapperFunction = (u: number, v: number): number => {
-            u += Eps;
-            v += Eps;
-            return this.interpolate(u, v);
+            let result = this.interpolate(u, v);
+            return result;
         };
 
         const geometry = new BarycentricGeometry(this.polygon, wrapperFunction, this.params.density);
@@ -113,7 +111,9 @@ class Interpolation {
             let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin);
 
             if (isNaN(value)) { // Occurs when point is on an edge
-                console.error("value at ", i, " is NaN");
+                const x = positions.array[i*numDims];
+                const y = positions.array[i*numDims + 1]
+                console.error("z value at (", x,", ",y, ") is NaN");
                 continue;
             }
             let color: number[] = evaluate_cmap(value / zRange, this.params.colormap, false);

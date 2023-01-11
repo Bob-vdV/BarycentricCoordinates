@@ -84,7 +84,6 @@ class Polygon {
             color: "red",
         })
 
-        //TODO: replace with simple sprite
         for(let i=0;i<this.points.length;i++){
             let circleGeometry = new THREE.CircleGeometry(0.4, 20);
             let circlemesh = new THREE.Mesh(circleGeometry, material);

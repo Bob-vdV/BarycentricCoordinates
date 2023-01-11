@@ -26,7 +26,6 @@ class BarycentricGeometry extends BufferGeometry {
         }
 
         this.setAttribute('position', new Float32BufferAttribute(positions, 3));
-
         // End of constructor
 
         /**
@@ -34,12 +33,12 @@ class BarycentricGeometry extends BufferGeometry {
          * be on the edges and produce NaN's
          * 
          */
-        function movePoints(points: Vector3[]): Vector3[]{
+        function movePoints(points: Vector3[]): Vector3[] {
             let newPoints: Vector3[] = [];
-            for(let i=0;i<points.length;i++){
-                let prev = points[mod(i-1, points.length)];
+            for (let i = 0; i < points.length; i++) {
+                let prev = points[mod(i - 1, points.length)];
                 let curr = points[i];
-                let next = points[mod(i+1, points.length)];
+                let next = points[mod(i + 1, points.length)];
 
                 // Calculate the bisection, then add/substract it depending on the angle
                 let e1 = curr.clone().sub(prev).normalize();
@@ -50,7 +49,7 @@ class BarycentricGeometry extends BufferGeometry {
                 bisectionUnitVector.normalize();
                 let angle = compute_angle(prev, curr, next);
 
-                if(angle <= Math.PI){
+                if (angle <= Math.PI) {
                     bisectionUnitVector.negate();
                 }
                 newPoints.push(curr.clone().addScaledVector(bisectionUnitVector, Eps));

@@ -11,7 +11,7 @@ class Controls {
     mapControls: DragControls; // 2D view (minimap)
 
     constructor(polygon: Polygon, interpolation: Interpolation, view: View, scene: THREE.Scene) {
-        this.mainControls = new MapControls(view.camera, view.labelRenderer.domElement);
+        this.mainControls = new MapControls(view.camera, view.renderer.domElement);
         this.mapControls = new DragControls([polygon.corners], view.mapCamera, view.mapRenderer.domElement);
         this.mapControls.getRaycaster().layers.set(1);
 

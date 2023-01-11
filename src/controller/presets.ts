@@ -1,6 +1,5 @@
 import { Polygon } from "../model/polygon";
 import { Vector3 } from "three";
-//TODO: maybe add numPoints as slider to GUI with button to apply
 
 function applyPreset(polygon: Polygon, preset: string, numPoints: number){
     switch (preset) {

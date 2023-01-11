@@ -1,7 +1,7 @@
 import { Model } from "../model/model"
 import * as THREE from "three";
 import { GuiWrapper } from "./guiwrapper"
-import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
+import { Clipper } from "./clipper";
 
 class View {
     readonly windowWidth: number;
@@ -13,8 +13,7 @@ class View {
     mapCamera: THREE.OrthographicCamera;
     tanFOV: number;
     renderer: THREE.WebGLRenderer;
-    mapRenderer: THREE.WebGLRenderer
-    labelRenderer: CSS2DRenderer;
+    mapRenderer: THREE.WebGLRenderer;
 
     gui: GuiWrapper;
 
@@ -58,12 +57,6 @@ class View {
 
         this.model.scene.add(this.mapCamera);
 
-        this.labelRenderer = new CSS2DRenderer(); //TODO: decide if we keep this or not
-        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
-        this.labelRenderer.domElement.style.position = 'absolute';
-        this.labelRenderer.domElement.style.top = '0px';
-        document.body.appendChild(this.labelRenderer.domElement);
-
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(this.windowWidth, this.windowHeight);
 
@@ -75,7 +68,8 @@ class View {
             this.onWindowResize();
         }, false);
 
-        this.gui = new GuiWrapper(model);
+        const clipper = new Clipper(this.renderer, model.interpolation);
+        this.gui = new GuiWrapper(model, clipper);
     }
 
 
@@ -94,13 +88,11 @@ class View {
         this.camera.lookAt(this.model.scene.position);
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     update() {
         this.renderer.render(this.model.scene, this.camera);
         this.mapRenderer.render(this.model.scene, this.mapCamera);
-        this.labelRenderer.render(this.model.scene, this.camera);
     }
 }
 

@@ -1,7 +1,6 @@
-import { Model } from "../model/model"
+import { Model } from "../model/model";
 import * as THREE from "three";
-import { GuiWrapper } from "./guiwrapper"
-import { Clipper } from "./clipper";
+import { GuiWrapper } from "./guiwrapper";
 
 class View {
     readonly windowWidth: number;
@@ -63,13 +62,11 @@ class View {
         this.camera.position.set(-2, -3, 4);
 
         this.camera.up = new THREE.Vector3(0, 0, 1); // Change the 'up' parameter to Z so that the controls work as intended
-
         window.addEventListener('resize', () => {
             this.onWindowResize();
         }, false);
 
-        const clipper = new Clipper(this.renderer, model.interpolation);
-        this.gui = new GuiWrapper(model, clipper);
+        this.gui = new GuiWrapper(model);
     }
 
 

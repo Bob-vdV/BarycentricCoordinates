@@ -2,7 +2,8 @@ import * as THREE from "three";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { Line2 } from "three/examples/jsm/lines/Line2";
-import { compute_angle, mod } from "./utils";
+import { compute_angle, mod, toVector2 } from "./utils";
+import { Edge } from "./edge";
 
 class Polygon {
     readonly name = "polygon";
@@ -84,7 +85,7 @@ class Polygon {
             color: "red",
         })
 
-        for(let i=0;i<this.points.length;i++){
+        for (let i = 0; i < this.points.length; i++) {
             let circleGeometry = new THREE.CircleGeometry(0.4, 20);
             let circlemesh = new THREE.Mesh(circleGeometry, material);
 
@@ -113,6 +114,22 @@ class Polygon {
             }
         }
         return true;
+    }
+
+    isSelfIntersecting(): boolean {
+        let edges: Edge[] = [];
+        for (let i = 0; i < this.points.length; i++) {
+            edges.push(new Edge(toVector2(this.points[i]), toVector2(this.points[mod(i + 1, this.points.length)])));
+        }
+
+        for (let i = 0; i < edges.length; i++) {
+            for (let j = 0; j < i - 1; j++) {
+                if (mod(i + 1, edges.length) != j && edges[i].intersectsWith(edges[j])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
 

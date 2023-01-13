@@ -25,8 +25,16 @@ class Controls {
         // End of constructor
         function onDrag(event: any) {
             const index = Number(event.object.name);
+            const originalPoint = polygon.points[index].clone();
+
             polygon.points[index].setX(event.object.position.x);
             polygon.points[index].setY(event.object.position.y);
+
+            // If it is self intersecting, revert changes
+            if(polygon.isSelfIntersecting()){
+                polygon.points[index] = originalPoint;
+            }
+
             polygonUpdater.update();
         }
 

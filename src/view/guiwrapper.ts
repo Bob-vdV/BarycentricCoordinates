@@ -5,14 +5,13 @@ import { InterpolationUpdateAction } from "../controller/actions/interpolationUp
 import { Vector3 } from "three";
 import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
 import * as presets from "../controller/presets";
-import { Clipper } from "./clipper";
 
 class GuiWrapper {
     parameters: any;
     model: Model;
     gui: GUI;
 
-    constructor(model: Model, clipper: Clipper) {
+    constructor(model: Model) {
         this.gui = new GUI();
         this.model = model;
 
@@ -32,8 +31,7 @@ class GuiWrapper {
             colormap: "viridis",
             wireframe: false,
             density: model.interpolation.params.density,
-            clipping: false,
-            clipHeight: 0.5,
+            contourLines: 0.1,
             pointIndex: initialIndex,
             z: this.model.polygon.points[initialIndex].z,
             deletePoint: function () { deletePoint(); },
@@ -113,6 +111,7 @@ class GuiWrapper {
 
             viewFolder.add(scope.parameters, "colormap", ["viridis", "gray", "hsv", "inferno", "jet", "terrain"]).onFinishChange(function (colormap: string) {
                 interpolationParams["colormap"] = colormap;
+                model.interpolation.setColors(colormap);
                 interpolationUpdater.update();
             });
 
@@ -126,15 +125,9 @@ class GuiWrapper {
                 interpolationUpdater.update();
             });
 
-            viewFolder.add(scope.parameters, "clipping").onChange(function (clippingEnabled: boolean) {
-                toggleController(sliceController, clippingEnabled);
-                clipper.toggleClipping(clippingEnabled);
+            viewFolder.add(scope.parameters, "contourLines").min(0).max(1).step(0.05).onChange(function (ContourLines: number) {
+                model.interpolation.material.uniforms.fragmentSize.value = ContourLines;
             });
-
-            let sliceController = viewFolder.add(scope.parameters, "clipHeight").min(-5).max(5).step(0.01).onChange(function (clipHeight: number) {
-                clipper.setHeight(clipHeight);
-            })
-            toggleController(sliceController, false);
         }
 
         function initPolygonFolder() {

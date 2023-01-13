@@ -113,6 +113,7 @@ class GuiWrapper {
 
             viewFolder.add(scope.parameters, "colormap", ["viridis", "gray", "hsv", "inferno", "jet", "terrain"]).onFinishChange(function (colormap: string) {
                 interpolationParams["colormap"] = colormap;
+                model.interpolation.setColors(colormap);
                 interpolationUpdater.update();
             });
 

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { mod, toVector2, signedTriangleArea } from "./utils";
-import { evaluate_cmap } from "./colormaps.js";
+import { evaluate_cmap, colorData } from "./colormaps.js";
 import * as c_fun from "./cFunctions";
 import { Polygon } from "./polygon";
 import { BarycentricGeometry } from "./barycentricGeometry";
@@ -14,13 +14,77 @@ class Interpolation {
         colormap: "viridis",
         wireframe: false,
     }
-    material: THREE.MeshBasicMaterial;
+    material!: THREE.ShaderMaterial;
     polygon: Polygon;
     mesh!: THREE.Mesh;
 
-    constructor(material: THREE.MeshBasicMaterial, polygon: Polygon) {
-        this.material = material;
+    constructor(polygon: Polygon) {
         this.polygon = polygon;
+        this.updateMaterial();
+    }
+
+    updateMaterial() {
+        let uniforms = {
+            colors: { value: null }, // Defined when colors are set
+            numColors: { value: null },
+            zMin: { value: null }, // Defined when interpolation is calculated
+            zRange: { value: null },
+        }
+
+        this.material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: vertexShader(),
+            transparent: false,
+            side: THREE.DoubleSide,
+        });
+
+        this.setColors(this.params.colormap);
+
+        function vertexShader() {
+            return `
+                uniform float zMin, zRange;
+                varying vec3 vUv; 
+                varying float colorValue;
+            
+                void main() {
+                    vUv = position; 
+                    colorValue = (vUv.z - zMin) / zRange;
+            
+                    vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * modelViewPosition; 
+                }
+                `
+        }
+    }
+
+    setColors(colormap: string) {
+        this.params.colormap = colormap;
+
+        let colors: any = colorData[this.params.colormap]["colors"];
+
+        let vectors: THREE.Color[] = [];
+        for (let i = 0; i < colors.length; i++) {
+            vectors.push(new THREE.Color(colors[i][0], colors[i][1], colors[i][2]));
+        }
+
+        this.material.uniforms.numColors.value = vectors.length;
+
+        this.material.uniforms.colors.value = vectors;
+        this.material.fragmentShader = fragmentShader();
+
+        function fragmentShader() {
+            return `
+                uniform int numColors;
+                uniform vec3[${vectors.length}] colors;
+                varying float colorValue;
+
+                void main() {
+                    int lo = int(colorValue * float(numColors - 1));
+                    int hi = int(ceil(colorValue * float(numColors - 1)));
+                    gl_FragColor = vec4(mix(colors[lo], colors[hi], 0.5), 1.0);                    
+                }
+            `
+        }
     }
 
     bivariteFunction(x: THREE.Vector2, points: THREE.Vector3[], idx: number): number {
@@ -81,13 +145,17 @@ class Interpolation {
         };
 
         const geometry = new BarycentricGeometry(this.polygon, wrapperFunction, this.params.density);
+        geometry.computeBoundingBox();
 
-        this.applyColorMap(geometry);
+        //this.applyColorMap(geometry);
+        this.material.uniforms.zMin.value = geometry.boundingBox?.min.z;
+        this.material.uniforms.zRange.value = geometry.boundingBox!.max.z - geometry.boundingBox!.min.z;
 
         this.mesh = new THREE.Mesh(geometry, this.material);
         this.mesh.name = this.name;
     }
 
+    //TODO: remove
     applyColorMap(geometry: THREE.BufferGeometry) {
         const positions = geometry.getAttribute("position");
         const numDims = positions.itemSize;
@@ -111,9 +179,9 @@ class Interpolation {
             let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin);
 
             if (isNaN(value)) { // Occurs when point is on an edge
-                const x = positions.array[i*numDims];
-                const y = positions.array[i*numDims + 1]
-                console.error("z value at (", x,", ",y, ") is NaN");
+                const x = positions.array[i * numDims];
+                const y = positions.array[i * numDims + 1]
+                console.error("z value at (", x, ", ", y, ") is NaN");
                 continue;
             }
             let color: number[] = evaluate_cmap(value / zRange, this.params.colormap, false);

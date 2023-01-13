@@ -30,7 +30,7 @@ class Model {
         this.polygon.generateMesh();
         this.scene.add(this.polygon.mesh);
 
-        this.interpolation = new Interpolation(new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true }), this.polygon);
+        this.interpolation = new Interpolation(this.polygon);
         this.interpolation.generateMesh();
 
         this.scene.add(this.interpolation.mesh);

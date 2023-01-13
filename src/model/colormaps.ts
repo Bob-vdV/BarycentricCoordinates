@@ -64,10 +64,10 @@ function interpolated(x: number, colors: any): number[] {
 function qualitative(x: number, colors: any): number[] {
   let idx = 0;
   while (x > (idx + 1) / (colors.length - 0)) { idx++; }
-  let r = Math.round(colors[idx][0] * 255);
-  let g = Math.round(colors[idx][1] * 255);
-  let b = Math.round(colors[idx][2] * 255);
+  let r = Math.round(colors[idx][0]);
+  let g = Math.round(colors[idx][1]);
+  let b = Math.round(colors[idx][2]);
   return [r, g, b];
 }
 
-export { evaluate_cmap }
+export { evaluate_cmap, data as colorData }

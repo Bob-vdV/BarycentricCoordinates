@@ -63,7 +63,6 @@ class View {
         this.camera.position.set(-2, -3, 4);
 
         this.camera.up = new THREE.Vector3(0, 0, 1); // Change the 'up' parameter to Z so that the controls work as intended
-
         window.addEventListener('resize', () => {
             this.onWindowResize();
         }, false);

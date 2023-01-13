@@ -20,11 +20,13 @@ class Interpolation {
 
     constructor(polygon: Polygon) {
         this.polygon = polygon;
-        this.updateMaterial();
+        this.initMaterial();
     }
 
-    updateMaterial() {
+    initMaterial() {
         let uniforms = {
+            fragmentSize: { value: 0.1 },
+            heightLineWidth: { value: 0.005 },
             colors: { value: null }, // Defined when colors are set
             numColors: { value: null },
             zMin: { value: null }, // Defined when interpolation is calculated
@@ -42,13 +44,10 @@ class Interpolation {
 
         function vertexShader() {
             return `
-                uniform float zMin, zRange;
                 varying vec3 vUv; 
-                varying float colorValue;
             
                 void main() {
                     vUv = position; 
-                    colorValue = (vUv.z - zMin) / zRange;
             
                     vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
                     gl_Position = projectionMatrix * modelViewPosition; 
@@ -76,12 +75,27 @@ class Interpolation {
             return `
                 uniform int numColors;
                 uniform vec3[${vectors.length}] colors;
-                varying float colorValue;
+                uniform float zMin, zRange;
+                uniform float fragmentSize, heightLineWidth;
+                varying vec3 vUv;
 
                 void main() {
+                    float colorValue = (vUv.z - zMin) / zRange;
+
                     int lo = int(colorValue * float(numColors - 1));
                     int hi = int(ceil(colorValue * float(numColors - 1)));
-                    gl_FragColor = vec4(mix(colors[lo], colors[hi], 0.5), 1.0);                    
+                    gl_FragColor = vec4(mix(colors[lo], colors[hi], 0.5), 1.0);
+
+                    if(fragmentSize != 0.0){
+                        float f = min(
+                            vUv.z  - floor(vUv.z / fragmentSize) * fragmentSize,
+                            (vUv.z  - ceil(vUv.z / fragmentSize) * fragmentSize) * -1.0
+                        );
+
+                        if(f < heightLineWidth){
+                            gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 1.0, 1.0), 1.0 - f / heightLineWidth);
+                        }
+                    }
                 }
             `
         }

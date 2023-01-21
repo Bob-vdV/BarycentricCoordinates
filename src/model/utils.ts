@@ -28,7 +28,7 @@ function signedTriangleArea(points: Vector2[]): number {
 }
 
 // Compute angle between edges p1-p2 and p2-p3
-function compute_angle(p1: Vector3, p2: Vector3, p3: Vector3): number {
+function compute_angle(p1: Vector2, p2: Vector2, p3: Vector2): number {
     let v1 = new Vector3(p2.x - p1.x, p2.y - p1.y); // Use vector3 because of angleTo function
     let v2 = new Vector3(p2.x - p3.x, p2.y - p3.y);
 
@@ -41,4 +41,58 @@ function compute_angle(p1: Vector3, p2: Vector3, p3: Vector3): number {
 }
 
 
-export { mod, toVector2, signedTriangleArea, compute_angle }
+/**
+ * Used to pass count by reference 
+ * 
+ */
+interface Counter {
+    count:number;
+}
+
+/**
+ *           0
+ *          / \
+ *         /   \
+ *        3 - - 5
+ *       / \   / \
+ *      /   \ /   \
+ *     1 - - 4 - - 2
+ * 
+ * @param depth 
+ * @param array 
+ * @param p0Idx 
+ * @param p1Idx 
+ * @param p2Idx 
+ * @param counter 
+ * @param indexes 
+ * @returns 
+ */
+function subTriangles(depth: number, array: Vector2[], p0Idx:number, p1Idx:number, p2Idx:number, counter:Counter, indexes: number[]): void {
+    if (depth == 1) {
+        indexes.push(p0Idx, p1Idx, p2Idx);
+        return;
+    }
+
+    const p0 = array[p0Idx];
+    const p1 = array[p1Idx];
+    const p2 = array[p2Idx];
+
+    const p3 = new Vector2().lerpVectors(p0, p1, 0.5);
+    const p4 = new Vector2().lerpVectors(p1, p2, 0.5);
+    const p5 = new Vector2().lerpVectors(p2, p0, 0.5);
+    array.push(p3, p4, p5);
+
+    const count = counter.count;
+    const p3Idx = count;
+    const p4Idx = count + 1;
+    const p5Idx = count + 2;
+
+    counter.count += 3;
+
+    subTriangles(depth-1, array, p0Idx, p3Idx, p5Idx, counter, indexes);
+    subTriangles(depth-1, array, p3Idx, p1Idx, p4Idx, counter, indexes);
+    subTriangles(depth-1, array, p4Idx, p5Idx, p3Idx, counter, indexes); // flipped upside down
+    subTriangles(depth-1, array, p5Idx, p4Idx, p2Idx, counter, indexes);
+}
+
+export { mod, toVector2, signedTriangleArea, compute_angle , subTriangles}

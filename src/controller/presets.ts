@@ -1,7 +1,7 @@
 import { Polygon } from "../model/polygon";
 import { Vector3 } from "three";
 
-function applyPreset(polygon: Polygon, preset: string, numPoints: number){
+function applyPreset(polygon: Polygon, preset: string, numPoints: number) {
     switch (preset) {
         case "regular polygon":
             regularPolygon(polygon, numPoints);
@@ -30,7 +30,7 @@ function generate_ngon(polygon: Polygon, numPoints: number, radius: number): voi
 }
 
 function regularPolygon(polygon: Polygon, numPoints: number): void {
-    const radius = 3;
+    const radius = 5;
     generate_ngon(polygon, numPoints, radius);
     polygon.points[0].setZ(1);
 }
@@ -59,7 +59,7 @@ function hyperParaboloid(polygon: Polygon, numPoints: number): void {
 
     const a = 1;
     const b = 2;
-    const c = 5;
+    const c = 12.5;
     const func = (x: number, y: number): number => {
         return (x * x / (a * a) - y * y / (b * b)) / c;
     }

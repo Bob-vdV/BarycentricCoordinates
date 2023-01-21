@@ -1,8 +1,8 @@
-import { BufferGeometry, Float32BufferAttribute, Vector3 } from "three"
+import { BufferGeometry, Float32BufferAttribute, Vector2, Vector3 } from "three"
 import { Polygon } from "./polygon";
 import { Triangle } from "./triangle";
 import { Earcut } from "three/src/extras/Earcut";
-import { compute_angle, mod } from "./utils";
+import { compute_angle, mod, subTriangles, toVector2 } from "./utils";
 
 class BarycentricGeometry extends BufferGeometry {
     parameters: any;
@@ -21,11 +21,28 @@ class BarycentricGeometry extends BufferGeometry {
         let mainTriangles = earcut(points);
 
         let positions: number[] = [];
+        let indices: number[] = [];
+        let counter = { count: 0 };
+        let vectors: Vector2[] = [];
+
         for (let i = 0; i < mainTriangles.length; i++) {
-            mainTriangles[i].subTriangles(density, positions, func);
+            mainTriangles[i].points.forEach(point => {
+                vectors.push(point);
+            });
+
+            let c = counter.count;
+            counter.count += 3;
+
+            subTriangles(density, vectors, c + 0, c + 1, c + 2, counter, indices);
+        }
+
+        // Calculate all the vertices
+        for (let i = 0; i < vectors.length; i++) {
+            positions.push(vectors[i].x, vectors[i].y, func(vectors[i].x, vectors[i].y));
         }
 
         this.setAttribute('position', new Float32BufferAttribute(positions, 3));
+        this.setIndex(indices);
         // End of constructor
 
         /**
@@ -33,12 +50,12 @@ class BarycentricGeometry extends BufferGeometry {
          * be on the edges and produce NaN's
          * 
          */
-        function movePoints(points: Vector3[]): Vector3[] {
-            let newPoints: Vector3[] = [];
+        function movePoints(points: Vector3[]): Vector2[] {
+            let newPoints: Vector2[] = [];
             for (let i = 0; i < points.length; i++) {
-                let prev = points[mod(i - 1, points.length)];
-                let curr = points[i];
-                let next = points[mod(i + 1, points.length)];
+                let prev = toVector2(points[mod(i - 1, points.length)]);
+                let curr = toVector2(points[i]);
+                let next = toVector2(points[mod(i + 1, points.length)]);
 
                 // Calculate the bisection, then add/substract it depending on the angle
                 let e1 = curr.clone().sub(prev).normalize();
@@ -57,7 +74,7 @@ class BarycentricGeometry extends BufferGeometry {
             return newPoints;
         }
 
-        function earcut(points: Vector3[]): Triangle[] {
+        function earcut(points: Vector2[]): Triangle[] {
             const data: number[] = [];
             for (let i = 0; i < points.length; i++) {
                 data.push(points[i].x);
@@ -71,7 +88,7 @@ class BarycentricGeometry extends BufferGeometry {
                 let p0 = points[results[i]];
                 let p1 = points[results[i + 1]];
                 let p2 = points[results[i + 2]];
-                triangles.push(new Triangle([p0, p1, p2]));
+                triangles.push({ points: [p0, p1, p2] });
             }
             return triangles
         }

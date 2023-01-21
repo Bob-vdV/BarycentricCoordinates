@@ -1,9 +1,9 @@
 import { GUI, GUIController } from "dat.gui";
 import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
-import { InterpolationUpdateAction } from "../controller/actions/interpolationUpdateAction";
+import { InterpolationUpdater } from "../controller/updaters/interpolationUpdater";
 import { Vector3 } from "three";
-import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
+import { PolygonUpdater } from "../controller/updaters/polygonUpdater";
 import * as presets from "../controller/presets";
 
 class GuiWrapper {
@@ -17,8 +17,8 @@ class GuiWrapper {
 
         let scope = this;
 
-        const interpolationUpdater = new InterpolationUpdateAction(model.interpolation, model.scene);
-        const polygonUpdater = new PolygonUpdateAction(model.polygon, this.model.scene);
+        const interpolationUpdater = new InterpolationUpdater(model.interpolation, model.scene);
+        const polygonUpdater = new PolygonUpdater(model.polygon, this.model.scene);
 
         let indexController: any;
         const indexes: number[] = []; //Simple list of [0..lastIndex]
@@ -31,7 +31,7 @@ class GuiWrapper {
             colormap: "viridis",
             wireframe: false,
             density: model.interpolation.params.density,
-            contourLines: 0.1,
+            contourLines: 5,
             pointIndex: initialIndex,
             z: this.model.polygon.points[initialIndex].z,
             deletePoint: function () { deletePoint(); },
@@ -125,8 +125,8 @@ class GuiWrapper {
                 interpolationUpdater.update();
             });
 
-            viewFolder.add(scope.parameters, "contourLines").min(0).max(1).step(0.05).onChange(function (ContourLines: number) {
-                model.interpolation.material.uniforms.fragmentSize.value = ContourLines;
+            viewFolder.add(scope.parameters, "contourLines").min(0).max(20).step(1).onChange(function (ContourLines: number) {
+                model.interpolation.material.uniforms.numContourLines.value = ContourLines;
             });
         }
 
@@ -253,7 +253,5 @@ class GuiWrapper {
         }
     }
 }
-
-
 
 export { GuiWrapper }

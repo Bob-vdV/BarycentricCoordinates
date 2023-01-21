@@ -1,6 +1,6 @@
 import { Polygon } from "../../model/polygon";
 
-class PolygonUpdateAction {
+class PolygonUpdater {
     figure: Polygon;
     scene: THREE.Scene;
 
@@ -32,4 +32,4 @@ class PolygonUpdateAction {
     }
 }
 
-export { PolygonUpdateAction }
+export { PolygonUpdater }

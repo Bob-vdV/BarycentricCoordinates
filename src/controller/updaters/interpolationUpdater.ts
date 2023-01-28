@@ -1,6 +1,6 @@
 import { Interpolation } from "../../model/interpolation"
 
-class InterpolationUpdateAction {
+class InterpolationUpdater {
     figure: Interpolation;
     scene: THREE.Scene;
 
@@ -22,4 +22,4 @@ class InterpolationUpdateAction {
     }
 }
 
-export { InterpolationUpdateAction }
+export { InterpolationUpdater }

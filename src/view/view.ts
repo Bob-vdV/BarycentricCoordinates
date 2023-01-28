@@ -1,20 +1,18 @@
 import { Model } from "../model/model";
 import * as THREE from "three";
-import { GuiWrapper } from "./guiwrapper";
+import { Gui } from "./gui";
 
 class View {
     readonly windowWidth: number;
     readonly windowHeight: number;
 
     model: Model
-
     camera: THREE.PerspectiveCamera;
     mapCamera: THREE.OrthographicCamera;
     tanFOV: number;
     renderer: THREE.WebGLRenderer;
     mapRenderer: THREE.WebGLRenderer;
-
-    gui: GuiWrapper;
+    gui: Gui;
 
     constructor(model: Model) {
         this.model = model;
@@ -59,14 +57,14 @@ class View {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(this.windowWidth, this.windowHeight);
 
-        this.camera.position.set(-2, -3, 4);
+        this.camera.position.set(-4, -6, 8);
 
         this.camera.up = new THREE.Vector3(0, 0, 1); // Change the 'up' parameter to Z so that the controls work as intended
         window.addEventListener('resize', () => {
             this.onWindowResize();
         }, false);
 
-        this.gui = new GuiWrapper(model);
+        this.gui = new Gui(model);
     }
 
 

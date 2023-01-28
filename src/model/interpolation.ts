@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { mod, toVector2, signedTriangleArea } from "./utils";
-import { evaluate_cmap, colorData } from "./colormaps.js";
+import { colorData } from "./colormaps.js";
 import * as c_fun from "./cFunctions";
 import { Polygon } from "./polygon";
 import { BarycentricGeometry } from "./barycentricGeometry";
@@ -25,7 +25,7 @@ class Interpolation {
 
     initMaterial() {
         let uniforms = {
-            fragmentSize: { value: 0.1 },
+            numContourLines: { value: 5 },
             heightLineWidth: { value: 0.005 },
             colors: { value: null }, // Defined when colors are set
             numColors: { value: null },
@@ -44,10 +44,10 @@ class Interpolation {
 
         function vertexShader() {
             return `
-                varying vec3 vUv; 
+                varying float zVal;
             
                 void main() {
-                    vUv = position; 
+                    zVal = position.z;
             
                     vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
                     gl_Position = projectionMatrix * modelViewPosition; 
@@ -74,25 +74,36 @@ class Interpolation {
         function fragmentShader() {
             return `
                 uniform int numColors;
+                uniform float numContourLines;
                 uniform vec3[${vectors.length}] colors;
                 uniform float zMin, zRange;
-                uniform float fragmentSize, heightLineWidth;
-                varying vec3 vUv;
+                uniform float heightLineWidth;
+                varying float zVal;
 
                 void main() {
-                    float colorValue = (vUv.z - zMin) / zRange;
+                    if(zRange == 0.0){
+                        gl_FragColor = vec4(colors[0], 1.0);
+                        return;
+                    }
+
+                    float relHeight = zVal - zMin;
+                    float colorValue = relHeight / zRange;
 
                     int lo = int(colorValue * float(numColors - 1));
                     int hi = int(ceil(colorValue * float(numColors - 1)));
-                    gl_FragColor = vec4(mix(colors[lo], colors[hi], 0.5), 1.0);
+                    float ratio = colorValue * float(numColors - 1) - float(lo);
+                    gl_FragColor = vec4(mix(colors[lo], colors[hi], ratio), 1.0);
 
-                    if(fragmentSize != 0.0){
+                    if(numContourLines != 0.0){
+                        float fragmentSize = zRange / (numContourLines + 1.0);
+
                         float f = min(
-                            vUv.z  - floor(vUv.z / fragmentSize) * fragmentSize,
-                            (vUv.z  - ceil(vUv.z / fragmentSize) * fragmentSize) * -1.0
+                            relHeight - floor(relHeight / fragmentSize) * fragmentSize,
+                            (relHeight - ceil(relHeight / fragmentSize) * fragmentSize) * -1.0
                         );
 
-                        if(f < heightLineWidth){
+                        // Draw white lines at each segment except for top and bottom
+                        if(f < heightLineWidth && relHeight > heightLineWidth && relHeight < zRange - heightLineWidth){
                             gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 1.0, 1.0), 1.0 - f / heightLineWidth);
                         }
                     }
@@ -161,7 +172,6 @@ class Interpolation {
         const geometry = new BarycentricGeometry(this.polygon, wrapperFunction, this.params.density);
         geometry.computeBoundingBox();
 
-        //this.applyColorMap(geometry);
         this.material.uniforms.zMin.value = geometry.boundingBox?.min.z;
         this.material.uniforms.zRange.value = geometry.boundingBox!.max.z - geometry.boundingBox!.min.z;
 
@@ -169,46 +179,6 @@ class Interpolation {
         this.mesh.name = this.name;
     }
 
-    //TODO: remove
-    applyColorMap(geometry: THREE.BufferGeometry) {
-        const positions = geometry.getAttribute("position");
-        const numDims = positions.itemSize;
-
-        const count = positions.count
-
-        const arr = this.polygon.points.map(point => point.z);
-        const zMin = Math.min.apply(null, arr);
-        const zMax = Math.max.apply(null, arr);
-
-        let zRange = zMax - zMin;
-
-        // Prevent division by 0 when every point is same height. 
-        if (zRange == 0) {
-            zRange = Infinity;
-        }
-
-        const numColors = 3;
-        let colors = new Float32Array(count * numColors);
-        for (let i = 0; i < count; i++) {
-            let value = (Math.max(zMin, Math.min(zMax, positions.array[i * numDims + 2])) - zMin);
-
-            if (isNaN(value)) { // Occurs when point is on an edge
-                const x = positions.array[i * numDims];
-                const y = positions.array[i * numDims + 1]
-                console.error("z value at (", x, ", ", y, ") is NaN");
-                continue;
-            }
-            let color: number[] = evaluate_cmap(value / zRange, this.params.colormap, false);
-
-            colors[i * numColors] = color[0];
-            colors[i * numColors + 1] = color[1];
-            colors[i * numColors + 2] = color[2];
-        }
-        geometry.setAttribute(
-            "color",
-            new THREE.BufferAttribute(colors, numColors)
-        );
-    }
 }
 
 export { Interpolation }

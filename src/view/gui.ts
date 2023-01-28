@@ -1,12 +1,12 @@
 import { GUI, GUIController } from "dat.gui";
 import { Model } from "../model/model";
 import * as c_fun from "../model/cFunctions";
-import { InterpolationUpdateAction } from "../controller/actions/interpolationUpdateAction";
+import { InterpolationUpdater } from "../controller/updaters/interpolationUpdater";
 import { Vector3 } from "three";
-import { PolygonUpdateAction } from "../controller/actions/polygonUpdateAction";
+import { PolygonUpdater } from "../controller/updaters/polygonUpdater";
 import * as presets from "../controller/presets";
 
-class GuiWrapper {
+class Gui {
     parameters: any;
     model: Model;
     gui: GUI;
@@ -17,8 +17,8 @@ class GuiWrapper {
 
         let scope = this;
 
-        const interpolationUpdater = new InterpolationUpdateAction(model.interpolation, model.scene);
-        const polygonUpdater = new PolygonUpdateAction(model.polygon, this.model.scene);
+        const interpolationUpdater = new InterpolationUpdater(model.interpolation, model.scene);
+        const polygonUpdater = new PolygonUpdater(model.polygon, this.model.scene);
 
         let indexController: any;
         const indexes: number[] = []; //Simple list of [0..lastIndex]
@@ -27,13 +27,14 @@ class GuiWrapper {
         this.parameters = {
             c_function: "r^p",
             p: 1,
-            custom_function: "2^r",
+            custom_function: "2^(-r)",
             colormap: "viridis",
             wireframe: false,
             density: model.interpolation.params.density,
-            contourLines: 0.1,
+            contourLines: 5,
             pointIndex: initialIndex,
             z: this.model.polygon.points[initialIndex].z,
+            cyclePoints: function () { cyclePoints(); },
             deletePoint: function () { deletePoint(); },
             addPoint: function () { addPoint(); },
             numPoints: 6,
@@ -125,8 +126,8 @@ class GuiWrapper {
                 interpolationUpdater.update();
             });
 
-            viewFolder.add(scope.parameters, "contourLines").min(0).max(1).step(0.05).onChange(function (ContourLines: number) {
-                model.interpolation.material.uniforms.fragmentSize.value = ContourLines;
+            viewFolder.add(scope.parameters, "contourLines").min(0).max(20).step(1).onChange(function (ContourLines: number) {
+                model.interpolation.material.uniforms.numContourLines.value = ContourLines;
             });
         }
 
@@ -156,7 +157,9 @@ class GuiWrapper {
 
             polygonFolder.add(scope.parameters, "deletePoint").name("Delete point");
 
-            polygonFolder.add(scope.parameters, "addPoint").name("add new point");
+            polygonFolder.add(scope.parameters, "addPoint").name("Add new point");
+
+            polygonFolder.add(scope.parameters, "cyclePoints").name("Cycle points");
         }
 
         function initPresetFolder() {
@@ -210,6 +213,21 @@ class GuiWrapper {
             }
         }
 
+        function cyclePoints() {
+            const polygon = model.polygon;
+            const size = polygon.points.length;
+            const zLast = polygon.points[size - 1].z;
+
+            for (let idx = size - 1; idx > 0; idx--) {
+                polygon.points[idx].z = polygon.points[idx - 1].z;
+            }
+            polygon.points[0].z = zLast;
+
+            updateSliders();
+            polygonUpdater.update();
+            interpolationUpdater.update();
+        }
+
         function deletePoint() {
             if (model.polygon.points.length > 3) { // Should be valid polygon
                 model.polygon.points.splice(scope.parameters.pointIndex, 1);
@@ -248,12 +266,12 @@ class GuiWrapper {
 
         function applyPreset() {
             presets.applyPreset(model.polygon, scope.parameters.preset, scope.parameters.numPoints);
+            updateDropdown(indexController, indexes);
+            updateSliders();
             polygonUpdater.update();
             interpolationUpdater.update();
         }
     }
 }
 
-
-
-export { GuiWrapper }
+export { Gui }

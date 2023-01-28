@@ -2,9 +2,9 @@ import { MapControls } from "three/examples/jsm/controls/OrbitControls"
 import { Polygon } from "../model/polygon";
 import { View } from "../view/view";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
-import { InterpolationUpdateAction } from "./actions/interpolationUpdateAction";
+import { InterpolationUpdater } from "./updaters/interpolationUpdater";
 import { Interpolation } from "../model/interpolation";
-import { PolygonUpdateAction } from "./actions/polygonUpdateAction";
+import { PolygonUpdater } from "./updaters/polygonUpdater";
 
 class Controls {
     mainControls: MapControls; // 3D view
@@ -15,8 +15,8 @@ class Controls {
         this.mapControls = new DragControls([polygon.corners], view.mapCamera, view.mapRenderer.domElement);
         this.mapControls.getRaycaster().layers.set(1);
 
-        const polygonUpdater = new PolygonUpdateAction(polygon, scene);
-        const interpolationUpdater = new InterpolationUpdateAction(interpolation, scene);
+        const polygonUpdater = new PolygonUpdater(polygon, scene);
+        const interpolationUpdater = new InterpolationUpdater(interpolation, scene);
 
         this.mapControls.addEventListener("drag", onDrag);
         this.mapControls.addEventListener("dragstart", onDragStart);

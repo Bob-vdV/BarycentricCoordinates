@@ -1,6 +1,6 @@
 import { Model } from "../model/model";
 import * as THREE from "three";
-import { GuiWrapper } from "./guiwrapper";
+import { Gui } from "./gui";
 
 class View {
     readonly windowWidth: number;
@@ -12,7 +12,7 @@ class View {
     tanFOV: number;
     renderer: THREE.WebGLRenderer;
     mapRenderer: THREE.WebGLRenderer;
-    gui: GuiWrapper;
+    gui: Gui;
 
     constructor(model: Model) {
         this.model = model;
@@ -64,7 +64,7 @@ class View {
             this.onWindowResize();
         }, false);
 
-        this.gui = new GuiWrapper(model);
+        this.gui = new Gui(model);
     }
 
 

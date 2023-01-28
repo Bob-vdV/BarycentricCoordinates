@@ -28,7 +28,7 @@ function signedTriangleArea(points: Vector2[]): number {
 }
 
 // Compute angle between edges p1-p2 and p2-p3
-function compute_angle(p1: Vector2, p2: Vector2, p3: Vector2): number {
+function compute_angle(p1: Vector2 | Vector3, p2: Vector2 | Vector3, p3: Vector2 | Vector3): number {
     let v1 = new Vector3(p2.x - p1.x, p2.y - p1.y); // Use vector3 because of angleTo function
     let v2 = new Vector3(p2.x - p3.x, p2.y - p3.y);
 
@@ -50,6 +50,10 @@ interface Counter {
 }
 
 /**
+ * Divide a triangle into 4 subtriangles until depth==1. Then add the indexes 
+ * of the subtriangles to the array of indexes.
+ * Triangle points are numbered as follows: 
+ * 
  *           0
  *          / \
  *         /   \
@@ -58,14 +62,6 @@ interface Counter {
  *      /   \ /   \
  *     1 - - 4 - - 2
  * 
- * @param depth 
- * @param array 
- * @param p0Idx 
- * @param p1Idx 
- * @param p2Idx 
- * @param counter 
- * @param indexes 
- * @returns 
  */
 function subTriangles(depth: number, array: Vector2[], p0Idx:number, p1Idx:number, p2Idx:number, counter:Counter, indexes: number[]): void {
     if (depth == 1) {

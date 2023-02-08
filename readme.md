@@ -4,7 +4,7 @@
     src="documentation/paperFrontpage.png" 
 />
 
-[![Deploy to Github Pages](https://github.com/Bob-vdV/BarycentricCoordinates/actions/workflows/static.yml/badge.svg)](https://github.com/Bob-vdV/BarycentricCoordinates/actions/workflows/static.yml)
+[![Deploy to Github Pages](https://github.com/Bob-vdV/BarycentricCoordinates/actions/workflows/deploy.yml/badge.svg)](https://github.com/Bob-vdV/BarycentricCoordinates/actions/workflows/deploy.yml)
 
 This 3D web tool allows the manipulation of a polygon and can show several generalized barycentric coordinates functions applied to it, including Wachspress and mean value coordinates. The functions and other mathematics behind it are discussed in detail in [1].
 

@@ -1,14 +1,13 @@
 
 # Generalized Barycentric Coordinates Tool
-<img    
-    src="documentation/paperFrontpage.png" 
-/>
+
+https://user-images.githubusercontent.com/33206400/217920542-d4f2ace5-e701-48f7-a3d2-0b6c73879365.mp4
 
 [![Deploy to Github Pages](https://github.com/Bob-vdV/BarycentricCoordinates/actions/workflows/deploy.yml/badge.svg)](https://github.com/Bob-vdV/BarycentricCoordinates/actions/workflows/deploy.yml)
 
-This 3D web tool allows the manipulation of a polygon and can show several generalized barycentric coordinates functions applied to it, including Wachspress and mean value coordinates. The functions and other mathematics behind it are discussed in detail in [1].
+### The Generalized Barycentric Coordinates Tool visualizes various barycentric coordinates for simple polygons in 3D.
 
-The tool is developed by Bob van der Vuurst and supervised by Jiri Kosinka for the 'Short Programming Project' course at the University of Groningen (RUG). Jiri Kosinka is the head of the [Scientific Visualization and Computer Graphics (SVCG) research group](https://www.cs.rug.nl/svcg/) at RUG and also an author of [1].
+The tool is developed by Bob van der Vuurst and supervised by Jiri Kosinka for the 'Short Programming Project' course at the University of Groningen (RUG). Jiri Kosinka is the head of the RUG's [Scientific Visualization and Computer Graphics (SVCG)](https://www.cs.rug.nl/svcg/) research group and is also an author of the paper the tool is based on [1].
 
 ## Documentation
 For an overview of the provided functionalities and documentation, please check the project report, which can be found [here](documentation/GeneralizedBarycentricCoordinates.pdf).
